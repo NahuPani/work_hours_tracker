@@ -23,6 +23,9 @@ interface WorkShiftDao {
     @Query("SELECT * FROM work_shifts ORDER BY startTimeMillis DESC")
     fun getAllShifts(): Flow<List<WorkShift>>
 
+    @Query("SELECT * FROM work_shifts ORDER BY startTimeMillis DESC")
+    suspend fun getAllShiftsList(): List<WorkShift>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(shifts: List<WorkShift>)
 

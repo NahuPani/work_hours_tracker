@@ -140,6 +140,32 @@ fun EarningsSummaryCard(
                     decimals = 0
                 )
 
+                // Comparison badge vs previous week
+                val diffPercent = summary.diffEarningsPercent
+                val diffAmount = summary.diffEarningsVsPrevWeek
+                if (summary.prevWeekEarnings > 0 && diffPercent != null) {
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        val isPositive = diffAmount >= 0
+                        val badgeColor = if (isPositive) AccentEmerald else Color(0xFFF59E0B)
+                        val icon = if (isPositive) "📈" else "📉"
+                        val sign = if (isPositive) "+" else ""
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(badgeColor.copy(alpha = 0.18f))
+                                .padding(horizontal = 8.dp, vertical = 3.dp)
+                        ) {
+                            Text(
+                                text = "$icon $sign${String.format(java.util.Locale.US, "%.0f", diffPercent)}% vs sem. ant.",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = badgeColor
+                            )
+                        }
+                    }
+                }
+
                 Spacer(modifier = Modifier.height(18.dp))
 
                 // Glassmorphic pills row

@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -300,6 +301,23 @@ fun HistoryScreen(
                                         context = context,
                                         report = viewModel.generateShareableReport(filteredShifts, filterLabel)
                                     )
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Exportar a PDF (Documento oficial)") },
+                                onClick = {
+                                    showShareMenu = false
+                                    val result = com.example.workhourstracker.util.PdfReportGenerator.generateReportPdf(
+                                        context = context,
+                                        shifts = filteredShifts,
+                                        periodTitle = filterLabel,
+                                        currencySymbol = currencySymbol
+                                    )
+                                    result.onSuccess { pdfFile ->
+                                        sharePdf(context, pdfFile, filterLabel)
+                                    }.onFailure { err ->
+                                        android.widget.Toast.makeText(context, "Error al generar PDF: ${err.localizedMessage}", android.widget.Toast.LENGTH_SHORT).show()
+                                    }
                                 }
                             )
                             DropdownMenuItem(
@@ -708,5 +726,25 @@ private fun shareCsv(context: Context, csvContent: String, filterName: String) {
         }
         val shareIntent = Intent.createChooser(sendIntent, "Exportar CSV")
         context.startActivity(shareIntent)
+    }
+}
+
+private fun sharePdf(context: Context, file: java.io.File, filterName: String) {
+    try {
+        val uri = androidx.core.content.FileProvider.getUriForFile(
+            context,
+            "${context.packageName}.fileprovider",
+            file
+        )
+        val sendIntent = Intent().apply {
+            action = Intent.ACTION_SEND
+            putExtra(Intent.EXTRA_STREAM, uri)
+            type = "application/pdf"
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+        val shareIntent = Intent.createChooser(sendIntent, "Exportar Reporte PDF")
+        context.startActivity(shareIntent)
+    } catch (e: Exception) {
+        android.widget.Toast.makeText(context, "No se pudo compartir el PDF: ${e.localizedMessage}", android.widget.Toast.LENGTH_LONG).show()
     }
 }

@@ -28,8 +28,19 @@ data class EarningsSummary(
     val monthHours: Double = 0.0,
     val monthEarnings: Double = 0.0,
     val totalHours: Double = 0.0,
-    val totalEarnings: Double = 0.0
-)
+    val totalEarnings: Double = 0.0,
+    val prevWeekHours: Double = 0.0,
+    val prevWeekEarnings: Double = 0.0
+) {
+    val diffEarningsVsPrevWeek: Double
+        get() = weekEarnings - prevWeekEarnings
+
+    val diffEarningsPercent: Double?
+        get() = if (prevWeekEarnings > 0) ((weekEarnings - prevWeekEarnings) / prevWeekEarnings) * 100.0 else null
+
+    val diffHoursPercent: Double?
+        get() = if (prevWeekHours > 0) ((weekHours - prevWeekHours) / prevWeekHours) * 100.0 else null
+}
 
 data class DayActivity(
     val dayOfWeek: String,
@@ -154,18 +165,21 @@ class WorkHoursViewModel(application: Application) : AndroidViewModel(applicatio
                 note = note.trim()
             )
             shiftDao.insertShift(shift)
+            com.example.workhourstracker.widget.MiTurnoWidgetProvider.updateAllWidgets(getApplication())
         }
     }
 
     fun updateShift(shift: WorkShift) {
         viewModelScope.launch {
             shiftDao.updateShift(shift)
+            com.example.workhourstracker.widget.MiTurnoWidgetProvider.updateAllWidgets(getApplication())
         }
     }
 
     fun deleteShift(shift: WorkShift) {
         viewModelScope.launch {
             shiftDao.deleteShift(shift)
+            com.example.workhourstracker.widget.MiTurnoWidgetProvider.updateAllWidgets(getApplication())
         }
     }
 
@@ -175,6 +189,7 @@ class WorkHoursViewModel(application: Application) : AndroidViewModel(applicatio
         prefs.currencySymbol = newSymbol
         _hourlyRate.value = validRate
         _currencySymbol.value = newSymbol
+        com.example.workhourstracker.widget.MiTurnoWidgetProvider.updateAllWidgets(getApplication())
     }
 
     fun updateOvertimeSettings(standardHours: Double, multiplier: Double, enabled: Boolean) {
@@ -184,11 +199,13 @@ class WorkHoursViewModel(application: Application) : AndroidViewModel(applicatio
         _standardDailyHours.value = standardHours
         _overtimeMultiplier.value = multiplier
         _enableOvertime.value = enabled
+        com.example.workhourstracker.widget.MiTurnoWidgetProvider.updateAllWidgets(getApplication())
     }
 
     fun updateStartDayOfWeek(day: Int) {
         prefs.startDayOfWeek = day
         _startDayOfWeek.value = day
+        com.example.workhourstracker.widget.MiTurnoWidgetProvider.updateAllWidgets(getApplication())
     }
 
     fun updateDraftStartTime(hour: Int, minute: Int) {
@@ -417,6 +434,12 @@ class WorkHoursViewModel(application: Application) : AndroidViewModel(applicatio
         }
         val startOfWeek = weekCalendar.timeInMillis
 
+        val prevWeekCalendar = (weekCalendar.clone() as Calendar).apply {
+            add(Calendar.DAY_OF_MONTH, -7)
+        }
+        val startOfPrevWeek = prevWeekCalendar.timeInMillis
+        val endOfPrevWeek = startOfWeek - 1
+
         val monthCalendar = Calendar.getInstance().apply {
             set(Calendar.DAY_OF_MONTH, 1)
             set(Calendar.HOUR_OF_DAY, 0)
@@ -430,6 +453,8 @@ class WorkHoursViewModel(application: Application) : AndroidViewModel(applicatio
         var todayE = 0.0
         var weekH = 0.0
         var weekE = 0.0
+        var prevWeekH = 0.0
+        var prevWeekE = 0.0
         var monthH = 0.0
         var monthE = 0.0
         var totalH = 0.0
@@ -449,6 +474,9 @@ class WorkHoursViewModel(application: Application) : AndroidViewModel(applicatio
             if (shift.startTimeMillis >= startOfWeek) {
                 weekH += h
                 weekE += e
+            } else if (shift.startTimeMillis in startOfPrevWeek..endOfPrevWeek) {
+                prevWeekH += h
+                prevWeekE += e
             }
             if (shift.startTimeMillis >= startOfToday) {
                 todayH += h
@@ -464,7 +492,9 @@ class WorkHoursViewModel(application: Application) : AndroidViewModel(applicatio
             monthHours = monthH,
             monthEarnings = monthE,
             totalHours = totalH,
-            totalEarnings = totalE
+            totalEarnings = totalE,
+            prevWeekHours = prevWeekH,
+            prevWeekEarnings = prevWeekE
         )
     }
 

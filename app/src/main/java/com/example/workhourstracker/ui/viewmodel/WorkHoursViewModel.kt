@@ -6,15 +6,12 @@ import androidx.lifecycle.viewModelScope
 import com.example.workhourstracker.data.AppDatabase
 import com.example.workhourstracker.data.UserPreferences
 import com.example.workhourstracker.data.WorkShift
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.util.Calendar
 
@@ -44,66 +41,22 @@ class WorkHoursViewModel(application: Application) : AndroidViewModel(applicatio
     private val _currencySymbol = MutableStateFlow(prefs.currencySymbol)
     val currencySymbol: StateFlow<String> = _currencySymbol.asStateFlow()
 
-    private val _isClockedIn = MutableStateFlow(prefs.activeShiftStartTime != null)
-    val isClockedIn: StateFlow<Boolean> = _isClockedIn.asStateFlow()
-
-    private val _activeShiftStartTime = MutableStateFlow(prefs.activeShiftStartTime)
-    val activeShiftStartTime: StateFlow<Long?> = _activeShiftStartTime.asStateFlow()
-
-    private val _elapsedSeconds = MutableStateFlow(0L)
-    val elapsedSeconds: StateFlow<Long> = _elapsedSeconds.asStateFlow()
-
-    private val _currentSessionEarnings = MutableStateFlow(0.0)
-    val currentSessionEarnings: StateFlow<Double> = _currentSessionEarnings.asStateFlow()
-
-    private var timerJob: Job? = null
-
-    // Combined earnings summary
-    val earningsSummary: StateFlow<EarningsSummary> = combine(
-        allShifts,
-        currentSessionEarnings,
-        elapsedSeconds,
-        isClockedIn
-    ) { shifts, activeEarnings, activeSeconds, clockedIn ->
-        calculateEarningsSummary(shifts, if (clockedIn) activeEarnings else 0.0, if (clockedIn) activeSeconds else 0L)
+    // Calculated summary of all recorded shifts
+    val earningsSummary: StateFlow<EarningsSummary> = allShifts.map { shifts ->
+        calculateEarningsSummary(shifts)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), EarningsSummary())
 
-    init {
-        // Restore active shift if app was closed while clocked in
-        val activeStart = prefs.activeShiftStartTime
-        if (activeStart != null) {
-            _isClockedIn.value = true
-            _activeShiftStartTime.value = activeStart
-            startTimer(activeStart)
-        }
-    }
-
-    fun clockIn() {
-        val now = System.currentTimeMillis()
-        prefs.activeShiftStartTime = now
-        prefs.activeShiftHourlyRate = _hourlyRate.value
-        _activeShiftStartTime.value = now
-        _isClockedIn.value = true
-        startTimer(now)
-    }
-
-    fun clockOut(note: String = "") {
-        val startTime = _activeShiftStartTime.value ?: return
-        val endTime = System.currentTimeMillis()
-        val rate = prefs.activeShiftHourlyRate ?: _hourlyRate.value
-
-        stopTimer()
-        prefs.clearActiveShift()
-        _isClockedIn.value = false
-        _activeShiftStartTime.value = null
-        _elapsedSeconds.value = 0L
-        _currentSessionEarnings.value = 0.0
-
+    fun addShift(
+        startTimeMillis: Long,
+        endTimeMillis: Long,
+        hourlyRate: Double = _hourlyRate.value,
+        note: String = ""
+    ) {
         viewModelScope.launch {
             val shift = WorkShift(
-                startTimeMillis = startTime,
-                endTimeMillis = endTime,
-                hourlyRate = rate,
+                startTimeMillis = startTimeMillis,
+                endTimeMillis = endTimeMillis,
+                hourlyRate = hourlyRate,
                 note = note.trim()
             )
             shiftDao.insertShift(shift)
@@ -116,15 +69,7 @@ class WorkHoursViewModel(application: Application) : AndroidViewModel(applicatio
         hourlyRate: Double,
         note: String
     ) {
-        viewModelScope.launch {
-            val shift = WorkShift(
-                startTimeMillis = startTimeMillis,
-                endTimeMillis = endTimeMillis,
-                hourlyRate = hourlyRate,
-                note = note.trim()
-            )
-            shiftDao.insertShift(shift)
-        }
+        addShift(startTimeMillis, endTimeMillis, hourlyRate, note)
     }
 
     fun deleteShift(shift: WorkShift) {
@@ -139,36 +84,9 @@ class WorkHoursViewModel(application: Application) : AndroidViewModel(applicatio
         prefs.currencySymbol = newSymbol
         _hourlyRate.value = validRate
         _currencySymbol.value = newSymbol
-        // Also update current session earnings calculation
-        if (_isClockedIn.value) {
-            _currentSessionEarnings.value = (_elapsedSeconds.value / 3600.0) * validRate
-        }
     }
 
-    private fun startTimer(startTimeMillis: Long) {
-        timerJob?.cancel()
-        timerJob = viewModelScope.launch {
-            while (isActive) {
-                val now = System.currentTimeMillis()
-                val seconds = ((now - startTimeMillis) / 1000).coerceAtLeast(0)
-                _elapsedSeconds.value = seconds
-                val rate = prefs.activeShiftHourlyRate ?: _hourlyRate.value
-                _currentSessionEarnings.value = (seconds / 3600.0) * rate
-                delay(1000)
-            }
-        }
-    }
-
-    private fun stopTimer() {
-        timerJob?.cancel()
-        timerJob = null
-    }
-
-    private fun calculateEarningsSummary(
-        shifts: List<WorkShift>,
-        activeEarnings: Double,
-        activeSeconds: Long
-    ): EarningsSummary {
+    private fun calculateEarningsSummary(shifts: List<WorkShift>): EarningsSummary {
         val now = Calendar.getInstance()
 
         // Start of Today (00:00:00)
@@ -233,16 +151,6 @@ class WorkHoursViewModel(application: Application) : AndroidViewModel(applicatio
             }
         }
 
-        val activeHours = activeSeconds / 3600.0
-        todayH += activeHours
-        todayE += activeEarnings
-        weekH += activeHours
-        weekE += activeEarnings
-        monthH += activeHours
-        monthE += activeEarnings
-        totalH += activeHours
-        totalE += activeEarnings
-
         return EarningsSummary(
             todayHours = todayH,
             todayEarnings = todayE,
@@ -253,10 +161,5 @@ class WorkHoursViewModel(application: Application) : AndroidViewModel(applicatio
             totalHours = totalH,
             totalEarnings = totalE
         )
-    }
-
-    override fun onCleared() {
-        super.onCleared()
-        stopTimer()
     }
 }

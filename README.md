@@ -9,12 +9,12 @@ Una aplicación nativa para Android construida con **Kotlin**, **Jetpack Compose
 1. **Configuración de Tarifa por Hora y Moneda**:
    - Ajusta tu valor por hora en cualquier momento (ej: `$2,500` / `$15.00`).
    - Elige el símbolo de moneda (`$`, `€`, `USD`, `ARS`, etc.).
-2. **Marcaje de Entrada y Salida en Tiempo Real**:
-   - Botón grande con animación de pulsación cuando estás en turno.
-   - Cronómetro digital en vivo (`HH:mm:ss`).
-   - Ganancias acumuladas en vivo segundo a segundo.
-   - Persistencia de sesión activa: Si cierras la app o bloqueas el celular mientras estás trabajando, el turno sigue activo sin perder el tiempo transcurrido.
-   - Opción para añadir una nota al finalizar (ej. "Turno tarde, horas extra").
+2. **Registro Directo de Entrada y Salida**:
+   - Selección ágil de hora de Entrada y Salida mediante selectores de hora nativos o botón "Ahora" de un solo toque.
+   - Selector de fecha ("Hoy" por defecto, con opción de elegir fechas pasadas con calendario).
+   - Cálculo instantáneo de horas trabajadas y dinero acumulado a cobrar en tiempo real.
+   - Detección inteligente de turnos nocturnos que cruzan la medianoche.
+   - Opción para añadir una nota al turno (ej. "Turno tarde, horas extra").
 3. **Cálculo Automático de Ingresos**:
    - **Hoy**: Total de dinero ganado y horas trabajadas en el día actual.
    - **Esta Semana**: Acumulado de la semana en curso (lunes a domingo).
@@ -24,9 +24,7 @@ Una aplicación nativa para Android construida con **Kotlin**, **Jetpack Compose
    - Resumen totalizador de horas e ingresos según el filtro seleccionado.
    - Tarjetas detalladas por turno: fecha, rango horario, duración exacta, tarifa aplicada y ganancia final.
    - Botón de eliminación de registros con confirmación.
-5. **Registro Manual de Turnos**:
-   - ¿Olvidaste marcar la entrada? Puedes registrar manualmente turnos pasados especificando fecha, hora de inicio, hora de fin, tarifa y nota.
-6. **Privacidad y Rendimiento 100% Offline**:
+5. **Privacidad y Rendimiento 100% Offline**:
    - Base de datos local **Room (SQLite)**: no requiere internet ni envía tus datos a servidores externos.
 
 ---
@@ -46,21 +44,21 @@ work_hours_tracker/
 │           │   ├── WorkShift.kt        # Entidad de la base de datos Room
 │           │   ├── WorkShiftDao.kt     # Consultas SQL / Room DAO
 │           │   ├── AppDatabase.kt      # Singleton de la base de datos Room
-│           │   └── UserPreferences.kt  # Almacenamiento local de tarifas y estado activo
+│           │   └── UserPreferences.kt  # Almacenamiento local de tarifas
 │           ├── ui/
 │           │   ├── theme/              # Paleta de colores, tipografía y tema Material 3
 │           │   ├── components/
-│           │   │   ├── ClockCard.kt            # Tarjeta de cronómetro y botón Entrada/Salida
+│           │   │   ├── DirectShiftCard.kt      # Tarjeta interactiva de horas entrada/salida y cálculo
 │           │   │   ├── EarningsSummaryCard.kt  # Resumen de ganancias Hoy / Semana / Mes
 │           │   │   ├── HourlyRateDialog.kt     # Diálogo para cambiar el valor de la hora
-│           │   │   └── ManualShiftDialog.kt    # Diálogo para cargar turnos pasados
+│           │   │   └── ManualShiftDialog.kt    # Diálogo para cargar turnos pasados desde historial
 │           │   └── screens/
-│           │       ├── HomeScreen.kt           # Pantalla principal
+│           │       ├── HomeScreen.kt           # Pantalla principal con registro directo
 │           │       ├── HistoryScreen.kt        # Pantalla de historial con filtros
 │           │       └── SettingsScreen.kt       # Configuración y estadísticas históricas
 │           └── viewmodel/
-│               └── WorkHoursViewModel.kt       # Lógica de cálculo en vivo y estados
-├── build.gradle.kts                    # Plugins del proyecto (Gradle, Kotlin, KSP)
+│               └── WorkHoursViewModel.kt       # Lógica reactiva de cálculo de ingresos y estados
+```├── build.gradle.kts                    # Plugins del proyecto (Gradle, Kotlin, KSP)
 ├── settings.gradle.kts
 └── gradle.properties
 ```

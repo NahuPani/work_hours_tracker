@@ -39,7 +39,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.workhourstracker.data.WorkShift
-import com.example.workhourstracker.ui.components.ClockCard
+import com.example.workhourstracker.ui.components.DirectShiftCard
 import com.example.workhourstracker.ui.components.EarningsSummaryCard
 import com.example.workhourstracker.ui.components.HourlyRateDialog
 import com.example.workhourstracker.ui.theme.AccentEmerald
@@ -54,10 +54,6 @@ fun HomeScreen(
     onNavigateToHistory: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val isClockedIn by viewModel.isClockedIn.collectAsState()
-    val startTimeMillis by viewModel.activeShiftStartTime.collectAsState()
-    val elapsedSeconds by viewModel.elapsedSeconds.collectAsState()
-    val currentEarnings by viewModel.currentSessionEarnings.collectAsState()
     val hourlyRate by viewModel.hourlyRate.collectAsState()
     val currencySymbol by viewModel.currencySymbol.collectAsState()
     val summary by viewModel.earningsSummary.collectAsState()
@@ -143,16 +139,14 @@ fun HomeScreen(
             }
         }
 
-        // Clock Card
+        // Direct Shift Entry Card (Entrada / Salida directa)
         item {
-            ClockCard(
-                isClockedIn = isClockedIn,
-                startTimeMillis = startTimeMillis,
-                elapsedSeconds = elapsedSeconds,
-                currentEarnings = currentEarnings,
+            DirectShiftCard(
+                hourlyRate = hourlyRate,
                 currencySymbol = currencySymbol,
-                onClockIn = { viewModel.clockIn() },
-                onClockOut = { note -> viewModel.clockOut(note) }
+                onSaveShift = { startTime, endTime, rate, note ->
+                    viewModel.addShift(startTime, endTime, rate, note)
+                }
             )
         }
 

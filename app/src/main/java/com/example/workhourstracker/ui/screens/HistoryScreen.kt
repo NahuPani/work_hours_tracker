@@ -5,6 +5,8 @@ import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -65,7 +67,10 @@ import java.util.Locale
 enum class HistoryFilter {
     ALL,
     THIS_WEEK,
-    THIS_MONTH
+    THIS_MONTH,
+    FIRST_FORTNIGHT,
+    SECOND_FORTNIGHT,
+    PREVIOUS_MONTH
 }
 
 @Composable
@@ -164,6 +169,59 @@ fun HistoryScreen(
                 val startOfMonth = monthCal.timeInMillis
                 shifts.filter { it.startTimeMillis >= startOfMonth }
             }
+            HistoryFilter.FIRST_FORTNIGHT -> {
+                val startCal = Calendar.getInstance().apply {
+                    set(Calendar.DAY_OF_MONTH, 1)
+                    set(Calendar.HOUR_OF_DAY, 0)
+                    set(Calendar.MINUTE, 0)
+                    set(Calendar.SECOND, 0)
+                    set(Calendar.MILLISECOND, 0)
+                }
+                val endCal = Calendar.getInstance().apply {
+                    set(Calendar.DAY_OF_MONTH, 15)
+                    set(Calendar.HOUR_OF_DAY, 23)
+                    set(Calendar.MINUTE, 59)
+                    set(Calendar.SECOND, 59)
+                    set(Calendar.MILLISECOND, 999)
+                }
+                shifts.filter { it.startTimeMillis in startCal.timeInMillis..endCal.timeInMillis }
+            }
+            HistoryFilter.SECOND_FORTNIGHT -> {
+                val startCal = Calendar.getInstance().apply {
+                    set(Calendar.DAY_OF_MONTH, 16)
+                    set(Calendar.HOUR_OF_DAY, 0)
+                    set(Calendar.MINUTE, 0)
+                    set(Calendar.SECOND, 0)
+                    set(Calendar.MILLISECOND, 0)
+                }
+                val nextMonthCal = Calendar.getInstance().apply {
+                    set(Calendar.DAY_OF_MONTH, 1)
+                    add(Calendar.MONTH, 1)
+                    set(Calendar.HOUR_OF_DAY, 0)
+                    set(Calendar.MINUTE, 0)
+                    set(Calendar.SECOND, 0)
+                    set(Calendar.MILLISECOND, 0)
+                }
+                shifts.filter { it.startTimeMillis in startCal.timeInMillis until nextMonthCal.timeInMillis }
+            }
+            HistoryFilter.PREVIOUS_MONTH -> {
+                val startPrevCal = Calendar.getInstance().apply {
+                    add(Calendar.MONTH, -1)
+                    set(Calendar.DAY_OF_MONTH, 1)
+                    set(Calendar.HOUR_OF_DAY, 0)
+                    set(Calendar.MINUTE, 0)
+                    set(Calendar.SECOND, 0)
+                    set(Calendar.MILLISECOND, 0)
+                }
+                val startCurrCal = Calendar.getInstance().apply {
+                    set(Calendar.DAY_OF_MONTH, 1)
+                    set(Calendar.HOUR_OF_DAY, 0)
+                    set(Calendar.MINUTE, 0)
+                    set(Calendar.SECOND, 0)
+                    set(Calendar.MILLISECOND, 0)
+                }
+                shifts.filter { it.startTimeMillis in startPrevCal.timeInMillis until startCurrCal.timeInMillis }
+            }
         }
     }
 
@@ -173,6 +231,9 @@ fun HistoryScreen(
         HistoryFilter.ALL -> "Historial Completo"
         HistoryFilter.THIS_WEEK -> "Esta Semana"
         HistoryFilter.THIS_MONTH -> "Este Mes"
+        HistoryFilter.FIRST_FORTNIGHT -> "1ª Quincena (1-15)"
+        HistoryFilter.SECOND_FORTNIGHT -> "2ª Quincena (16-fin)"
+        HistoryFilter.PREVIOUS_MONTH -> "Mes Anterior"
     }
 
     Scaffold(
@@ -248,9 +309,11 @@ fun HistoryScreen(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Filter Chips
+                // Filter Chips (Scrollable row)
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     FilterChip(
@@ -267,6 +330,21 @@ fun HistoryScreen(
                         selected = selectedFilter == HistoryFilter.THIS_MONTH,
                         onClick = { selectedFilter = HistoryFilter.THIS_MONTH },
                         label = { Text("Este Mes") }
+                    )
+                    FilterChip(
+                        selected = selectedFilter == HistoryFilter.FIRST_FORTNIGHT,
+                        onClick = { selectedFilter = HistoryFilter.FIRST_FORTNIGHT },
+                        label = { Text("1ª Quincena (1-15)") }
+                    )
+                    FilterChip(
+                        selected = selectedFilter == HistoryFilter.SECOND_FORTNIGHT,
+                        onClick = { selectedFilter = HistoryFilter.SECOND_FORTNIGHT },
+                        label = { Text("2ª Quincena (16-fin)") }
+                    )
+                    FilterChip(
+                        selected = selectedFilter == HistoryFilter.PREVIOUS_MONTH,
+                        onClick = { selectedFilter = HistoryFilter.PREVIOUS_MONTH },
+                        label = { Text("Mes Pasado") }
                     )
                 }
             }

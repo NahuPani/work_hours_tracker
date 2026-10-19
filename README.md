@@ -9,28 +9,31 @@ Una aplicación nativa para Android construida con **Kotlin**, **Jetpack Compose
 1. **Configuración de Tarifa por Hora y Moneda**:
    - Ajusta tu valor por hora en cualquier momento (ej: `$2,500` / `$15.00`).
    - Elige el símbolo de moneda (`$`, `€`, `USD`, `ARS`, etc.).
-2. **Registro Directo con Descuento de Descanso y Horas Extras**:
+2. **Registro Directo y Persistente (Borrador Protegido)**:
    - Selección ágil de hora de Entrada y Salida con selectores nativos o botón "Ahora".
-   - Selector de fecha ("Hoy" por defecto, con opción de elegir fechas pasadas en calendario).
-   - **Descuento de almuerzo/descanso** (`0m`, `15m`, `30m`, `45m`, `1h`) deducido automáticamente del tiempo computable.
-   - **Horas extras automáticas**: configuración de jornada estándar (ej: 8 horas) y multiplicador de recargo (ej: 1.5x / 50% extra).
-   - Cálculo instantáneo de horas trabajadas y dinero acumulado a cobrar en tiempo real.
-   - **Vibración háptica** al guardar el turno.
-3. **Cálculo Automático de Ingresos**:
+   - Soporte nativo para **turnos nocturnos** (ej: 22:00 a 06:00 del día siguiente).
+   - Los datos en pantalla nunca se pierden al cambiar de pestaña en la aplicación.
+   - **Jornadas limpias sin deducción de descansos**: pensado para trabajos donde los descansos son 100% pagos.
+   - **Horas extras automáticas y cálculo por día**: si trabajas en **turnos partidos** (ej: mañana y tarde el mismo día), las horas diarias se acumulan correctamente antes de calcular horas extras.
+   - Cálculo instantáneo de horas trabajadas y dinero acumulado a cobrar en tiempo real con vibración háptica.
+3. **Ciclo Laboral Personalizado (Miércoles a Martes)**:
    - **Hoy**: Total de dinero ganado y horas trabajadas en el día actual.
-   - **Esta Semana**: Acumulado de la semana en curso (lunes a domingo).
+   - **Esta Semana**: Acumulado exacto de tu ciclo laboral (por defecto de **Miércoles a Martes**, configurable desde Ajustes).
+   - **Gráfico de Barras Semanal**: Visualización interactiva de tu rendimiento día a día (Mié, Jue, Vie, Sáb, Dom, Lun, Mar).
    - **Este Mes**: Acumulado del mes calendario.
 4. **Historial Completo con Edición y Reportes**:
-   - **Edición completa**: toca cualquier turno del historial para modificar fecha, horarios, descanso o tarifa si cometiste un error.
-   - Filtros por: *Todos*, *Esta Semana* y *Este Mes*.
+   - **Edición completa**: toca cualquier turno del historial para modificar fecha, horarios o tarifa si cometiste un error.
+   - Filtros avanzados: *Todos*, *Esta Semana (Mié-Mar)*, *Este Mes*, *1ª Quincena (1-15)*, *2ª Quincena (16-fin)* y *Mes Pasado*.
    - **Compartir por WhatsApp**: genera un resumen formateado listo para enviar a tu empleador o cliente.
    - **Exportar a CSV (Excel)**: descarga o comparte un archivo tabular con todas las jornadas desglosadas.
    - Eliminación de registros con diálogo de confirmación.
-5. **Copia de Seguridad y Restauración (Backup & Restore)**:
-   - Exporta todos tus datos a un archivo JSON para tener siempre un respaldo.
-   - Restaura tus registros con un clic al cambiar o formatear el celular.
-6. **Privacidad y Rendimiento 100% Offline**:
-   - Base de datos local **Room (SQLite)**: no requiere internet ni envía tus datos a servidores externos.
+5. **Copia de Seguridad Inteligente (Sin Duplicados)**:
+   - Exporta todos tus datos y configuraciones a un archivo JSON.
+   - Al restaurar, fusiona de forma segura **omitiendo turnos duplicados** o permite reemplazar todo limpiamente.
+6. **Buscador de Actualizaciones Integrado**:
+   - Consulta automáticamente a GitHub si hay una nueva versión disponible y permite descargarla directamente.
+7. **Privacidad y Seguridad de Base de Datos**:
+   - Base de datos local **Room (SQLite)** con migraciones seguras y exportación de esquemas (nunca borra tus datos en actualizaciones). 100% offline y privado.
 
 ---
 

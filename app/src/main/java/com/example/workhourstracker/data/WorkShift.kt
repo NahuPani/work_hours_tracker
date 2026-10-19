@@ -19,6 +19,19 @@ data class WorkShift(
     val overtimeMultiplier: Double = 1.5,
     val note: String = ""
 ) {
+    @androidx.room.Ignore
+    var overrideRegularHours: Double? = null
+
+    @androidx.room.Ignore
+    var overrideOvertimeHours: Double? = null
+
+    fun withDailyOvertime(regular: Double, overtime: Double): WorkShift {
+        val shift = this.copy()
+        shift.overrideRegularHours = regular
+        shift.overrideOvertimeHours = overtime
+        return shift
+    }
+
     val grossDurationMillis: Long
         get() = (endTimeMillis - startTimeMillis).coerceAtLeast(0)
 
@@ -35,10 +48,10 @@ data class WorkShift(
         get() = standardDailyHours > 0.0 && overtimeMultiplier > 1.0
 
     val regularHours: Double
-        get() = if (isOvertimeActive) minOf(durationHours, standardDailyHours) else durationHours
+        get() = overrideRegularHours ?: if (isOvertimeActive) minOf(durationHours, standardDailyHours) else durationHours
 
     val overtimeHours: Double
-        get() = if (isOvertimeActive) maxOf(0.0, durationHours - standardDailyHours) else 0.0
+        get() = overrideOvertimeHours ?: if (isOvertimeActive) maxOf(0.0, durationHours - standardDailyHours) else 0.0
 
     val regularEarnings: Double
         get() = regularHours * hourlyRate

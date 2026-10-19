@@ -157,14 +157,20 @@ fun ManualShiftDialog(
 
                         val calStart = Calendar.getInstance().apply {
                             set(year, month, day, startParts[0].toInt(), startParts[1].toInt(), 0)
+                            set(Calendar.MILLISECOND, 0)
                         }
 
                         val calEnd = Calendar.getInstance().apply {
                             set(year, month, day, endParts[0].toInt(), endParts[1].toInt(), 0)
+                            set(Calendar.MILLISECOND, 0)
+                            // Cruce de medianoche: si la hora de fin es menor a la de inicio, pasa al día siguiente
+                            if (timeInMillis <= calStart.timeInMillis) {
+                                add(Calendar.DAY_OF_MONTH, 1)
+                            }
                         }
 
-                        if (calEnd.timeInMillis <= calStart.timeInMillis) {
-                            errorMessage = "La hora de salida debe ser posterior a la de entrada"
+                        if (calEnd.timeInMillis == calStart.timeInMillis) {
+                            errorMessage = "La duración de la jornada debe ser mayor a 0 minutos"
                             return@TextButton
                         }
 

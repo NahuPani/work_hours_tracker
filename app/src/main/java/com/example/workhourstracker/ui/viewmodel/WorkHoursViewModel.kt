@@ -47,6 +47,7 @@ class WorkHoursViewModel(application: Application) : AndroidViewModel(applicatio
     private val prefs = UserPreferences(application)
 
     val allShifts: StateFlow<List<WorkShift>> = shiftDao.getAllShifts()
+        .map { shifts -> processDailyOvertime(shifts) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     private val _hourlyRate = MutableStateFlow(prefs.hourlyRate)
@@ -274,12 +275,14 @@ class WorkHoursViewModel(application: Application) : AndroidViewModel(applicatio
     // Backup: Export all data to JSON
     fun exportBackupJson(): String {
         val json = org.json.JSONObject()
-        json.put("version", 2)
+        json.put("version", 3)
         json.put("exportDate", System.currentTimeMillis())
         json.put("hourlyRate", _hourlyRate.value)
         json.put("currencySymbol", _currencySymbol.value)
         json.put("standardDailyHours", _standardDailyHours.value)
         json.put("overtimeMultiplier", _overtimeMultiplier.value)
+        json.put("enableOvertime", _enableOvertime.value)
+        json.put("startDayOfWeek", _startDayOfWeek.value)
 
         val array = org.json.JSONArray()
         allShifts.value.forEach { s ->
@@ -299,27 +302,48 @@ class WorkHoursViewModel(application: Application) : AndroidViewModel(applicatio
         return json.toString(2)
     }
 
-    // Restore data from JSON
-    suspend fun restoreBackupJson(jsonString: String): Result<Int> {
+    // Restore data from JSON with duplicate prevention
+    suspend fun restoreBackupJson(jsonString: String, replaceExisting: Boolean = false): Result<Int> {
         return try {
             val json = org.json.JSONObject(jsonString)
-            if (json.has("hourlyRate")) updateHourlyRate(json.getDouble("hourlyRate"), json.optString("currencySymbol", "$"))
+            if (json.has("hourlyRate")) {
+                updateHourlyRate(json.getDouble("hourlyRate"), json.optString("currencySymbol", "$"))
+            }
+            val enableOt = json.optBoolean("enableOvertime", prefs.enableOvertime)
             if (json.has("standardDailyHours")) {
                 updateOvertimeSettings(
                     json.optDouble("standardDailyHours", 8.0),
                     json.optDouble("overtimeMultiplier", 1.5),
-                    true
+                    enableOt
                 )
             }
+            if (json.has("startDayOfWeek")) {
+                updateStartDayOfWeek(json.getInt("startDayOfWeek"))
+            }
+
+            if (replaceExisting) {
+                shiftDao.deleteAllShifts()
+            }
+
+            // Existing keys to avoid duplicating when merging
+            val existingKeys = if (replaceExisting) emptySet() else allShifts.value.map { "${it.startTimeMillis}_${it.endTimeMillis}" }.toSet()
 
             val array = json.getJSONArray("shifts")
             val list = mutableListOf<WorkShift>()
             for (i in 0 until array.length()) {
                 val item = array.getJSONObject(i)
+                val start = item.getLong("startTimeMillis")
+                val end = item.getLong("endTimeMillis")
+                val key = "${start}_${end}"
+
+                if (!replaceExisting && existingKeys.contains(key)) {
+                    continue
+                }
+
                 list.add(
                     WorkShift(
-                        startTimeMillis = item.getLong("startTimeMillis"),
-                        endTimeMillis = item.getLong("endTimeMillis"),
+                        startTimeMillis = start,
+                        endTimeMillis = end,
                         hourlyRate = item.getDouble("hourlyRate"),
                         breakMinutes = item.optInt("breakMinutes", 0),
                         isBreakPaid = item.optBoolean("isBreakPaid", true),
@@ -329,11 +353,42 @@ class WorkHoursViewModel(application: Application) : AndroidViewModel(applicatio
                     )
                 )
             }
-            shiftDao.insertAll(list)
+            if (list.isNotEmpty()) {
+                shiftDao.insertAll(list)
+            }
             Result.success(list.size)
         } catch (e: Exception) {
             Result.failure(e)
         }
+    }
+
+    private fun processDailyOvertime(shifts: List<WorkShift>): List<WorkShift> {
+        val dateFormat = java.text.SimpleDateFormat("yyyy-MM-dd", Locale.US)
+        val grouped = shifts.groupBy { dateFormat.format(Date(it.startTimeMillis)) }
+        val result = mutableListOf<WorkShift>()
+
+        for ((_, dayShifts) in grouped) {
+            val sorted = dayShifts.sortedBy { it.startTimeMillis }
+            var cumulativeHours = 0.0
+
+            for (shift in sorted) {
+                val duration = shift.durationHours
+                if (!shift.isOvertimeActive) {
+                    result.add(shift.withDailyOvertime(duration, 0.0))
+                } else {
+                    val stdHours = shift.standardDailyHours
+                    val hoursBefore = cumulativeHours
+                    val hoursAfter = hoursBefore + duration
+
+                    val reg = (minOf(hoursAfter, stdHours) - minOf(hoursBefore, stdHours)).coerceAtLeast(0.0)
+                    val ot = (duration - reg).coerceAtLeast(0.0)
+
+                    result.add(shift.withDailyOvertime(reg, ot))
+                    cumulativeHours = hoursAfter
+                }
+            }
+        }
+        return result.sortedByDescending { it.startTimeMillis }
     }
 
     private fun calculateEarningsSummary(shifts: List<WorkShift>, startDay: Int): EarningsSummary {

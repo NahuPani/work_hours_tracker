@@ -190,12 +190,18 @@ fun SettingsScreen(
     if (showRestoreDialog) {
         RestoreDialog(
             onDismiss = { showRestoreDialog = false },
-            onConfirm = { json ->
+            onConfirm = { json, replaceExisting ->
                 coroutineScope.launch {
-                    val result = viewModel.restoreBackupJson(json)
+                    val result = viewModel.restoreBackupJson(json, replaceExisting)
                     showRestoreDialog = false
                     if (result.isSuccess) {
-                        Toast.makeText(context, "✓ ¡${result.getOrNull()} turnos restaurados con éxito!", Toast.LENGTH_LONG).show()
+                        val count = result.getOrNull() ?: 0
+                        val msg = if (replaceExisting) {
+                            "✓ ¡Copia restaurada! ($count turnos importados)"
+                        } else {
+                            "✓ ¡$count turnos nuevos importados sin duplicar!"
+                        }
+                        Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
                     } else {
                         Toast.makeText(context, "Error al restaurar: archivo inválido", Toast.LENGTH_LONG).show()
                     }

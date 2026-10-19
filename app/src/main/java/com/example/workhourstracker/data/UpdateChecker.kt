@@ -114,16 +114,20 @@ object UpdateChecker {
             setRequestProperty("User-Agent", "WorkHoursTracker-Android")
         }
 
-        if (conn.responseCode in 200..299) {
-            val reader = BufferedReader(InputStreamReader(conn.inputStream))
-            val sb = StringBuilder()
-            var line: String?
-            while (reader.readLine().also { line = it } != null) {
-                sb.append(line)
+        try {
+            if (conn.responseCode in 200..299) {
+                val reader = BufferedReader(InputStreamReader(conn.inputStream))
+                val sb = StringBuilder()
+                var line: String?
+                while (reader.readLine().also { line = it } != null) {
+                    sb.append(line)
+                }
+                reader.close()
+                return JSONObject(sb.toString())
             }
-            reader.close()
-            return JSONObject(sb.toString())
+            return null
+        } finally {
+            conn.disconnect()
         }
-        return null
     }
 }

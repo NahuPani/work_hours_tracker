@@ -17,21 +17,37 @@ class UserPreferences(context: Context) {
         private const val KEY_START_OF_WEEK = "key_start_of_week"
     }
 
+    private fun getDoubleCompat(key: String, default: Double): Double {
+        return try {
+            Double.fromBits(prefs.getLong(key, default.toRawBits()))
+        } catch (e: ClassCastException) {
+            // Migrates legacy Float value stored in earlier versions
+            try {
+                val legacyFloat = prefs.getFloat(key, default.toFloat())
+                val doubleVal = legacyFloat.toDouble()
+                prefs.edit().putLong(key, doubleVal.toRawBits()).apply()
+                doubleVal
+            } catch (e2: Exception) {
+                default
+            }
+        }
+    }
+
     var hourlyRate: Double
-        get() = prefs.getFloat(KEY_HOURLY_RATE, 2500.0f).toDouble()
-        set(value) = prefs.edit().putFloat(KEY_HOURLY_RATE, value.toFloat()).apply()
+        get() = getDoubleCompat(KEY_HOURLY_RATE, 2500.0)
+        set(value) = prefs.edit().putLong(KEY_HOURLY_RATE, value.toRawBits()).apply()
 
     var currencySymbol: String
         get() = prefs.getString(KEY_CURRENCY_SYMBOL, "$") ?: "$"
         set(value) = prefs.edit().putString(KEY_CURRENCY_SYMBOL, value).apply()
 
     var standardDailyHours: Double
-        get() = prefs.getFloat(KEY_STANDARD_DAILY_HOURS, 8.0f).toDouble()
-        set(value) = prefs.edit().putFloat(KEY_STANDARD_DAILY_HOURS, value.toFloat()).apply()
+        get() = getDoubleCompat(KEY_STANDARD_DAILY_HOURS, 8.0)
+        set(value) = prefs.edit().putLong(KEY_STANDARD_DAILY_HOURS, value.toRawBits()).apply()
 
     var overtimeMultiplier: Double
-        get() = prefs.getFloat(KEY_OVERTIME_MULTIPLIER, 1.5f).toDouble()
-        set(value) = prefs.edit().putFloat(KEY_OVERTIME_MULTIPLIER, value.toFloat()).apply()
+        get() = getDoubleCompat(KEY_OVERTIME_MULTIPLIER, 1.5)
+        set(value) = prefs.edit().putLong(KEY_OVERTIME_MULTIPLIER, value.toRawBits()).apply()
 
     var enableOvertime: Boolean
         get() = prefs.getBoolean(KEY_ENABLE_OVERTIME, true)

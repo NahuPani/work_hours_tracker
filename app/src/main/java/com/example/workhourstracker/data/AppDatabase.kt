@@ -25,7 +25,9 @@ abstract class AppDatabase : RoomDatabase() {
 
         val MIGRATION_2_3 = object : Migration(2, 3) {
             override fun migrate(db: SupportSQLiteDatabase) {
-                // Table schema sync for version 3
+                // Intentional no-op: v3 has identical schema to v2.
+                // Version was bumped for app-level logic changes only (daily overtime, backup format).
+                // If adding columns in a future version, create MIGRATION_3_4 with ALTER TABLE statements.
             }
         }
 

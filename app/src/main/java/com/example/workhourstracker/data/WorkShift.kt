@@ -19,6 +19,11 @@ data class WorkShift(
     val overtimeMultiplier: Double = 1.5,
     val note: String = ""
 ) {
+    /**
+     * Runtime-only overrides for cumulative daily overtime calculation.
+     * WARNING: These fields are NOT preserved by data class copy().
+     * Always use [withDailyOvertime] to set them on a new copy.
+     */
     @androidx.room.Ignore
     var overrideRegularHours: Double? = null
 
@@ -62,21 +67,18 @@ data class WorkShift(
     val totalEarnings: Double
         get() = regularEarnings + overtimeEarnings
 
-    fun formattedDate(): String {
-        val sdf = SimpleDateFormat("EEEE, d 'de' MMMM yyyy", Locale("es", "ES"))
-        return sdf.format(Date(startTimeMillis)).replaceFirstChar { it.uppercase() }
+    fun formattedDate(): String = synchronized(DATE_FORMAT_FULL) {
+        DATE_FORMAT_FULL.format(Date(startTimeMillis)).replaceFirstChar { it.uppercase() }
     }
 
-    fun formattedShortDate(): String {
-        val sdf = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
-        return sdf.format(Date(startTimeMillis))
+    fun formattedShortDate(): String = synchronized(DATE_FORMAT_SHORT) {
+        DATE_FORMAT_SHORT.format(Date(startTimeMillis))
     }
 
-    fun formattedTimeRange(): String {
-        val sdf = SimpleDateFormat("HH:mm", Locale.getDefault())
-        val start = sdf.format(Date(startTimeMillis))
-        val end = sdf.format(Date(endTimeMillis))
-        return "$start - $end"
+    fun formattedTimeRange(): String = synchronized(TIME_FORMAT) {
+        val start = TIME_FORMAT.format(Date(startTimeMillis))
+        val end = TIME_FORMAT.format(Date(endTimeMillis))
+        "$start - $end"
     }
 
     fun formattedDuration(): String {
@@ -84,5 +86,13 @@ data class WorkShift(
         val hours = totalMinutes / 60
         val minutes = totalMinutes % 60
         return if (hours > 0) "${hours}h ${minutes}m" else "${minutes}m"
+    }
+
+    companion object {
+        // Cached formatters to avoid creating expensive SimpleDateFormat objects on every call.
+        // Note: SimpleDateFormat is not thread-safe, but in a single-threaded UI context this is fine.
+        private val DATE_FORMAT_FULL = SimpleDateFormat("EEEE, d 'de' MMMM yyyy", Locale("es", "ES"))
+        private val DATE_FORMAT_SHORT = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+        private val TIME_FORMAT = SimpleDateFormat("HH:mm", Locale.getDefault())
     }
 }

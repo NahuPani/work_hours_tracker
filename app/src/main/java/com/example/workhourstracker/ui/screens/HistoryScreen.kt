@@ -605,12 +605,33 @@ private fun shareReportText(context: Context, report: String) {
 }
 
 private fun shareCsv(context: Context, csvContent: String, filterName: String) {
-    val sendIntent = Intent().apply {
-        action = Intent.ACTION_SEND
-        putExtra(Intent.EXTRA_SUBJECT, "Reporte Horas - $filterName.csv")
-        putExtra(Intent.EXTRA_TEXT, csvContent)
-        type = "text/csv"
+    try {
+        val fileName = "Reporte_Horas_${filterName.replace(" ", "_")}.csv"
+        val file = java.io.File(context.cacheDir, fileName)
+        file.writeText(csvContent)
+
+        val uri = androidx.core.content.FileProvider.getUriForFile(
+            context,
+            "${context.packageName}.fileprovider",
+            file
+        )
+        val sendIntent = Intent().apply {
+            action = Intent.ACTION_SEND
+            putExtra(Intent.EXTRA_STREAM, uri)
+            type = "text/csv"
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+        val shareIntent = Intent.createChooser(sendIntent, "Exportar CSV")
+        context.startActivity(shareIntent)
+    } catch (e: Exception) {
+        // Fallback to text sharing if FileProvider is not configured
+        val sendIntent = Intent().apply {
+            action = Intent.ACTION_SEND
+            putExtra(Intent.EXTRA_SUBJECT, "Reporte Horas - $filterName.csv")
+            putExtra(Intent.EXTRA_TEXT, csvContent)
+            type = "text/csv"
+        }
+        val shareIntent = Intent.createChooser(sendIntent, "Exportar CSV")
+        context.startActivity(shareIntent)
     }
-    val shareIntent = Intent.createChooser(sendIntent, "Exportar CSV")
-    context.startActivity(shareIntent)
 }

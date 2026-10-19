@@ -113,7 +113,10 @@ fun HomeScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column {
-                    val dateFormatted = remember {
+                    val todayKey = remember { java.util.Calendar.getInstance() }.let {
+                        it.get(java.util.Calendar.YEAR) * 1000 + it.get(java.util.Calendar.DAY_OF_YEAR)
+                    }
+                    val dateFormatted = remember(todayKey) {
                         SimpleDateFormat("EEEE, d 'de' MMMM", Locale("es", "ES"))
                             .format(Date())
                             .replaceFirstChar { it.uppercase() }

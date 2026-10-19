@@ -119,9 +119,13 @@ class WorkHoursViewModel(application: Application) : AndroidViewModel(applicatio
                 if (info != null && info.isUpdateAvailable) {
                     _updateInfo.value = info
                 }
-                onComplete?.invoke(info)
+                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                    onComplete?.invoke(info)
+                }
             } else {
-                onComplete?.invoke(null)
+                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                    onComplete?.invoke(null)
+                }
             }
         }
     }

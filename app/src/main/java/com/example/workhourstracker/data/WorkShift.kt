@@ -14,6 +14,7 @@ data class WorkShift(
     val endTimeMillis: Long,
     val hourlyRate: Double,
     val breakMinutes: Int = 0,
+    val isBreakPaid: Boolean = true,
     val standardDailyHours: Double = 8.0,
     val overtimeMultiplier: Double = 1.5,
     val note: String = ""
@@ -25,7 +26,7 @@ data class WorkShift(
         get() = breakMinutes * 60000L
 
     val durationMillis: Long
-        get() = (grossDurationMillis - breakMillis).coerceAtLeast(0)
+        get() = if (isBreakPaid) grossDurationMillis else (grossDurationMillis - breakMillis).coerceAtLeast(0)
 
     val durationHours: Double
         get() = durationMillis / 3600000.0
@@ -70,6 +71,10 @@ data class WorkShift(
         val hours = totalMinutes / 60
         val minutes = totalMinutes % 60
         val base = if (hours > 0) "${hours}h ${minutes}m" else "${minutes}m"
-        return if (breakMinutes > 0) "$base (descanso: ${breakMinutes}m)" else base
+        return if (breakMinutes > 0) {
+            if (isBreakPaid) "$base (inc. ${breakMinutes}m descanso pago)" else "$base (descanso: ${breakMinutes}m)"
+        } else {
+            base
+        }
     }
 }

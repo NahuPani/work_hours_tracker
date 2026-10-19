@@ -132,16 +132,16 @@ fun EditShiftDialog(
     }
 
     val grossMillis = (endCal.timeInMillis - startCal.timeInMillis).coerceAtLeast(0)
-    val netMillis = (grossMillis - breakMinutes * 60000L).coerceAtLeast(0)
-    val netHours = netMillis / 3600000.0
-    val totalMins = (netMillis / 60000).toInt()
+    // Los descansos se pagan
+    val durationHours = grossMillis / 3600000.0
+    val totalMins = (grossMillis / 60000).toInt()
     val hours = totalMins / 60
     val minutes = totalMins % 60
 
     val currentRate = rateInput.toDoubleOrNull() ?: shift.hourlyRate
     val isOvertime = shift.standardDailyHours > 0.0 && shift.overtimeMultiplier > 1.0
-    val regH = if (isOvertime) minOf(netHours, shift.standardDailyHours) else netHours
-    val extraH = if (isOvertime) maxOf(0.0, netHours - shift.standardDailyHours) else 0.0
+    val regH = if (isOvertime) minOf(durationHours, shift.standardDailyHours) else durationHours
+    val extraH = if (isOvertime) maxOf(0.0, durationHours - shift.standardDailyHours) else 0.0
     val estimatedEarnings = (regH * currentRate) + (extraH * currentRate * shift.overtimeMultiplier)
 
     AlertDialog(
@@ -279,7 +279,11 @@ fun EditShiftDialog(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column {
-                            Text("Total neto:", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(
+                                text = if (breakMinutes > 0) "Tiempo (inc. ${breakMinutes}m descanso pago):" else "Tiempo trabajado:",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                             Text(
                                 text = if (hours > 0) "${hours}h ${minutes}m" else "${minutes}m",
                                 style = MaterialTheme.typography.titleMedium,

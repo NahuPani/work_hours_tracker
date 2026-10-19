@@ -65,6 +65,7 @@ class WorkHoursViewModel(application: Application) : AndroidViewModel(applicatio
         endTimeMillis: Long,
         hourlyRate: Double = _hourlyRate.value,
         breakMinutes: Int = _defaultBreakMinutes.value,
+        isBreakPaid: Boolean = true,
         standardDailyHours: Double = if (_enableOvertime.value) _standardDailyHours.value else 0.0,
         overtimeMultiplier: Double = if (_enableOvertime.value) _overtimeMultiplier.value else 1.0,
         note: String = ""
@@ -75,6 +76,7 @@ class WorkHoursViewModel(application: Application) : AndroidViewModel(applicatio
                 endTimeMillis = endTimeMillis,
                 hourlyRate = hourlyRate,
                 breakMinutes = breakMinutes,
+                isBreakPaid = isBreakPaid,
                 standardDailyHours = standardDailyHours,
                 overtimeMultiplier = overtimeMultiplier,
                 note = note.trim()
@@ -193,6 +195,7 @@ class WorkHoursViewModel(application: Application) : AndroidViewModel(applicatio
             item.put("endTimeMillis", s.endTimeMillis)
             item.put("hourlyRate", s.hourlyRate)
             item.put("breakMinutes", s.breakMinutes)
+            item.put("isBreakPaid", s.isBreakPaid)
             item.put("standardDailyHours", s.standardDailyHours)
             item.put("overtimeMultiplier", s.overtimeMultiplier)
             item.put("note", s.note)
@@ -225,6 +228,7 @@ class WorkHoursViewModel(application: Application) : AndroidViewModel(applicatio
                         endTimeMillis = item.getLong("endTimeMillis"),
                         hourlyRate = item.getDouble("hourlyRate"),
                         breakMinutes = item.optInt("breakMinutes", 0),
+                        isBreakPaid = item.optBoolean("isBreakPaid", true),
                         standardDailyHours = item.optDouble("standardDailyHours", 8.0),
                         overtimeMultiplier = item.optDouble("overtimeMultiplier", 1.5),
                         note = item.optString("note", "")

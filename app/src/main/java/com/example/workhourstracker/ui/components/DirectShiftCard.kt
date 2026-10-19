@@ -167,18 +167,17 @@ fun DirectShiftCard(
     }
 
     val grossDurationMillis = (endCal.timeInMillis - startCal.timeInMillis).coerceAtLeast(0)
-    val breakMillis = breakMinutes * 60000L
-    val netDurationMillis = (grossDurationMillis - breakMillis).coerceAtLeast(0)
-    val netHours = netDurationMillis / 3600000.0
+    // Los descansos se pagan: la duración total computable no se descuenta
+    val durationHours = grossDurationMillis / 3600000.0
 
-    val totalNetMinutes = (netDurationMillis / 60000).toInt()
-    val hours = totalNetMinutes / 60
-    val minutes = totalNetMinutes % 60
+    val totalMinutes = (grossDurationMillis / 60000).toInt()
+    val hours = totalMinutes / 60
+    val minutes = totalMinutes % 60
 
     // Overtime calculation
     val isOvertimeActive = enableOvertime && standardDailyHours > 0.0 && overtimeMultiplier > 1.0
-    val regularHours = if (isOvertimeActive) minOf(netHours, standardDailyHours) else netHours
-    val overtimeHours = if (isOvertimeActive) maxOf(0.0, netHours - standardDailyHours) else 0.0
+    val regularHours = if (isOvertimeActive) minOf(durationHours, standardDailyHours) else durationHours
+    val overtimeHours = if (isOvertimeActive) maxOf(0.0, durationHours - standardDailyHours) else 0.0
     val estimatedEarnings = (regularHours * hourlyRate) + (overtimeHours * (hourlyRate * overtimeMultiplier))
 
     Card(
@@ -346,7 +345,7 @@ fun DirectShiftCard(
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Text(
-                                    text = "Tiempo neto trabajado",
+                                    text = if (breakMinutes > 0) "Tiempo trabajado (inc. ${breakMinutes}m descanso pago)" else "Tiempo trabajado",
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )

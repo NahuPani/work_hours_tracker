@@ -23,16 +23,19 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.FreeBreakfast
 import androidx.compose.material.icons.filled.Login
 import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -46,7 +49,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -60,10 +65,23 @@ import java.util.Locale
 fun DirectShiftCard(
     hourlyRate: Double,
     currencySymbol: String,
-    onSaveShift: (startTimeMillis: Long, endTimeMillis: Long, hourlyRate: Double, note: String) -> Unit,
+    standardDailyHours: Double = 8.0,
+    overtimeMultiplier: Double = 1.5,
+    enableOvertime: Boolean = true,
+    defaultBreakMinutes: Int = 0,
+    onSaveShift: (
+        startTimeMillis: Long,
+        endTimeMillis: Long,
+        hourlyRate: Double,
+        breakMinutes: Int,
+        standardDailyHours: Double,
+        overtimeMultiplier: Double,
+        note: String
+    ) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val haptic = LocalHapticFeedback.current
     val is24Hour = DateFormat.is24HourFormat(context)
 
     // Current date state
@@ -77,6 +95,7 @@ fun DirectShiftCard(
     var endHour by remember { mutableIntStateOf(16) }
     var endMinute by remember { mutableIntStateOf(0) }
 
+    var breakMinutes by remember { mutableIntStateOf(defaultBreakMinutes) }
     var noteText by remember { mutableStateOf("") }
     var successMessage by remember { mutableStateOf<String?>(null) }
 
@@ -128,7 +147,7 @@ fun DirectShiftCard(
         )
     }
 
-    // Calculate Milliseconds and Duration
+    // Calculate Milliseconds and Net Duration
     val startCal = (selectedCalendar.clone() as Calendar).apply {
         set(Calendar.HOUR_OF_DAY, startHour)
         set(Calendar.MINUTE, startMinute)
@@ -147,12 +166,20 @@ fun DirectShiftCard(
         }
     }
 
-    val durationMillis = (endCal.timeInMillis - startCal.timeInMillis).coerceAtLeast(0)
-    val durationHours = durationMillis / 3600000.0
-    val totalMinutes = (durationMillis / 60000).toInt()
-    val hours = totalMinutes / 60
-    val minutes = totalMinutes % 60
-    val estimatedEarnings = durationHours * hourlyRate
+    val grossDurationMillis = (endCal.timeInMillis - startCal.timeInMillis).coerceAtLeast(0)
+    val breakMillis = breakMinutes * 60000L
+    val netDurationMillis = (grossDurationMillis - breakMillis).coerceAtLeast(0)
+    val netHours = netDurationMillis / 3600000.0
+
+    val totalNetMinutes = (netDurationMillis / 60000).toInt()
+    val hours = totalNetMinutes / 60
+    val minutes = totalNetMinutes % 60
+
+    // Overtime calculation
+    val isOvertimeActive = enableOvertime && standardDailyHours > 0.0 && overtimeMultiplier > 1.0
+    val regularHours = if (isOvertimeActive) minOf(netHours, standardDailyHours) else netHours
+    val overtimeHours = if (isOvertimeActive) maxOf(0.0, netHours - standardDailyHours) else 0.0
+    val estimatedEarnings = (regularHours * hourlyRate) + (overtimeHours * (hourlyRate * overtimeMultiplier))
 
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -219,7 +246,6 @@ fun DirectShiftCard(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Entrada Card
                 TimeSelectorBox(
                     modifier = Modifier.weight(1f),
                     title = "ENTRADA",
@@ -235,7 +261,6 @@ fun DirectShiftCard(
                     }
                 )
 
-                // Salida Card
                 TimeSelectorBox(
                     modifier = Modifier.weight(1f),
                     title = "SALIDA",
@@ -252,7 +277,50 @@ fun DirectShiftCard(
                 )
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // Break / Almuerzo Selector
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(
+                    imageVector = Icons.Default.FreeBreakfast,
+                    contentDescription = "Descanso",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = "Descanso / Almuerzo:",
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            Spacer(modifier = Modifier.height(6.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                val breakOptions = listOf(0 to "0m", 15 to "15m", 30 to "30m", 45 to "45m", 60 to "1h")
+                breakOptions.forEach { (mins, label) ->
+                    val isSelected = breakMinutes == mins
+                    FilterChip(
+                        selected = isSelected,
+                        onClick = { breakMinutes = mins },
+                        label = { Text(label, fontSize = 12.sp) },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                            selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
 
             // Real-Time Duration and Earnings Preview Banner
             Box(
@@ -262,49 +330,77 @@ fun DirectShiftCard(
                     .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
                     .padding(14.dp)
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Default.Schedule,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Default.Schedule,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = "Tiempo neto trabajado",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(2.dp))
                             Text(
-                                text = "Duración calculada",
+                                text = if (hours > 0) "${hours}h ${minutes}m" else "${minutes}m",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+
+                        Column(horizontalAlignment = Alignment.End) {
+                            Text(
+                                text = "Total a cobrar",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            val formattedEarnings = String.format(Locale.getDefault(), "%,.2f", estimatedEarnings)
+                            Text(
+                                text = "$currencySymbol$formattedEarnings",
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = AccentEmerald
+                            )
                         }
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Text(
-                            text = if (hours > 0) "${hours}h ${minutes}m" else "${minutes}m",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
                     }
 
-                    Column(horizontalAlignment = Alignment.End) {
-                        Text(
-                            text = "A cobrar",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Spacer(modifier = Modifier.height(2.dp))
-                        val formattedEarnings = String.format(Locale.getDefault(), "%,.2f", estimatedEarnings)
-                        Text(
-                            text = "$currencySymbol$formattedEarnings",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = AccentEmerald
-                        )
+                    // Overtime details if applicable
+                    if (overtimeHours > 0.0) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f))
+                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.TrendingUp,
+                                contentDescription = "Horas extra",
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(14.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "Incluye ${String.format(Locale.US, "%.1f", overtimeHours)}h extra (+${((overtimeMultiplier - 1.0) * 100).toInt()}%)",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
                     }
                 }
             }
@@ -346,10 +442,14 @@ fun DirectShiftCard(
             // Save Shift Button
             Button(
                 onClick = {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                     onSaveShift(
                         startCal.timeInMillis,
                         endCal.timeInMillis,
                         hourlyRate,
+                        breakMinutes,
+                        if (enableOvertime) standardDailyHours else 0.0,
+                        if (enableOvertime) overtimeMultiplier else 1.0,
                         noteText
                     )
                     successMessage = "✓ ¡Turno de ${hours}h ${minutes}m guardado con éxito!"
@@ -423,7 +523,6 @@ private fun TimeSelectorBox(
                     )
                 }
 
-                // Quick "Ahora" button
                 Text(
                     text = "Ahora",
                     style = MaterialTheme.typography.labelSmall,
@@ -438,7 +537,6 @@ private fun TimeSelectorBox(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Time Display (clickable to open TimePickerDialog)
             Box(
                 modifier = Modifier
                     .fillMaxWidth()

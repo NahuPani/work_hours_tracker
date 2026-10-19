@@ -56,6 +56,10 @@ fun HomeScreen(
 ) {
     val hourlyRate by viewModel.hourlyRate.collectAsState()
     val currencySymbol by viewModel.currencySymbol.collectAsState()
+    val standardDailyHours by viewModel.standardDailyHours.collectAsState()
+    val overtimeMultiplier by viewModel.overtimeMultiplier.collectAsState()
+    val enableOvertime by viewModel.enableOvertime.collectAsState()
+    val defaultBreakMinutes by viewModel.defaultBreakMinutes.collectAsState()
     val summary by viewModel.earningsSummary.collectAsState()
     val shifts by viewModel.allShifts.collectAsState()
 
@@ -144,8 +148,20 @@ fun HomeScreen(
             DirectShiftCard(
                 hourlyRate = hourlyRate,
                 currencySymbol = currencySymbol,
-                onSaveShift = { startTime, endTime, rate, note ->
-                    viewModel.addShift(startTime, endTime, rate, note)
+                standardDailyHours = standardDailyHours,
+                overtimeMultiplier = overtimeMultiplier,
+                enableOvertime = enableOvertime,
+                defaultBreakMinutes = defaultBreakMinutes,
+                onSaveShift = { startTime, endTime, rate, breakMin, stdHours, extraMultiplier, note ->
+                    viewModel.addShift(
+                        startTimeMillis = startTime,
+                        endTimeMillis = endTime,
+                        hourlyRate = rate,
+                        breakMinutes = breakMin,
+                        standardDailyHours = stdHours,
+                        overtimeMultiplier = extraMultiplier,
+                        note = note
+                    )
                 }
             )
         }

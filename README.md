@@ -9,22 +9,27 @@ Una aplicación nativa para Android construida con **Kotlin**, **Jetpack Compose
 1. **Configuración de Tarifa por Hora y Moneda**:
    - Ajusta tu valor por hora en cualquier momento (ej: `$2,500` / `$15.00`).
    - Elige el símbolo de moneda (`$`, `€`, `USD`, `ARS`, etc.).
-2. **Registro Directo de Entrada y Salida**:
-   - Selección ágil de hora de Entrada y Salida mediante selectores de hora nativos o botón "Ahora" de un solo toque.
-   - Selector de fecha ("Hoy" por defecto, con opción de elegir fechas pasadas con calendario).
+2. **Registro Directo con Descuento de Descanso y Horas Extras**:
+   - Selección ágil de hora de Entrada y Salida con selectores nativos o botón "Ahora".
+   - Selector de fecha ("Hoy" por defecto, con opción de elegir fechas pasadas en calendario).
+   - **Descuento de almuerzo/descanso** (`0m`, `15m`, `30m`, `45m`, `1h`) deducido automáticamente del tiempo computable.
+   - **Horas extras automáticas**: configuración de jornada estándar (ej: 8 horas) y multiplicador de recargo (ej: 1.5x / 50% extra).
    - Cálculo instantáneo de horas trabajadas y dinero acumulado a cobrar en tiempo real.
-   - Detección inteligente de turnos nocturnos que cruzan la medianoche.
-   - Opción para añadir una nota al turno (ej. "Turno tarde, horas extra").
+   - **Vibración háptica** al guardar el turno.
 3. **Cálculo Automático de Ingresos**:
    - **Hoy**: Total de dinero ganado y horas trabajadas en el día actual.
    - **Esta Semana**: Acumulado de la semana en curso (lunes a domingo).
    - **Este Mes**: Acumulado del mes calendario.
-4. **Historial Completo de Jornadas**:
+4. **Historial Completo con Edición y Reportes**:
+   - **Edición completa**: toca cualquier turno del historial para modificar fecha, horarios, descanso o tarifa si cometiste un error.
    - Filtros por: *Todos*, *Esta Semana* y *Este Mes*.
-   - Resumen totalizador de horas e ingresos según el filtro seleccionado.
-   - Tarjetas detalladas por turno: fecha, rango horario, duración exacta, tarifa aplicada y ganancia final.
-   - Botón de eliminación de registros con confirmación.
-5. **Privacidad y Rendimiento 100% Offline**:
+   - **Compartir por WhatsApp**: genera un resumen formateado listo para enviar a tu empleador o cliente.
+   - **Exportar a CSV (Excel)**: descarga o comparte un archivo tabular con todas las jornadas desglosadas.
+   - Eliminación de registros con diálogo de confirmación.
+5. **Copia de Seguridad y Restauración (Backup & Restore)**:
+   - Exporta todos tus datos a un archivo JSON para tener siempre un respaldo.
+   - Restaura tus registros con un clic al cambiar o formatear el celular.
+6. **Privacidad y Rendimiento 100% Offline**:
    - Base de datos local **Room (SQLite)**: no requiere internet ni envía tus datos a servidores externos.
 
 ---
@@ -41,23 +46,26 @@ work_hours_tracker/
 │       └── java/com/example/workhourstracker/
 │           ├── MainActivity.kt         # Punto de entrada y barra de navegación inferior
 │           ├── data/
-│           │   ├── WorkShift.kt        # Entidad de la base de datos Room
-│           │   ├── WorkShiftDao.kt     # Consultas SQL / Room DAO
-│           │   ├── AppDatabase.kt      # Singleton de la base de datos Room
-│           │   └── UserPreferences.kt  # Almacenamiento local de tarifas
+│           │   ├── WorkShift.kt        # Entidad de la BD con horas extras y descansos
+│           │   ├── WorkShiftDao.kt     # Consultas SQL / Room DAO con operaciones masivas
+│           │   ├── AppDatabase.kt      # Singleton de la base de datos Room v2
+│           │   └── UserPreferences.kt  # Almacenamiento local de tarifas, horas extras y descansos
 │           ├── ui/
 │           │   ├── theme/              # Paleta de colores, tipografía y tema Material 3
 │           │   ├── components/
-│           │   │   ├── DirectShiftCard.kt      # Tarjeta interactiva de horas entrada/salida y cálculo
+│           │   │   ├── DirectShiftCard.kt      # Carga directa de horas, descanso, extras y háptico
 │           │   │   ├── EarningsSummaryCard.kt  # Resumen de ganancias Hoy / Semana / Mes
 │           │   │   ├── HourlyRateDialog.kt     # Diálogo para cambiar el valor de la hora
-│           │   │   └── ManualShiftDialog.kt    # Diálogo para cargar turnos pasados desde historial
+│           │   │   ├── EditShiftDialog.kt      # Diálogo para editar turnos existentes
+│           │   │   ├── OvertimeDialog.kt       # Diálogo para configurar horas extras y recargo
+│           │   │   ├── RestoreDialog.kt        # Diálogo para restaurar backup JSON
+│           │   │   └── ManualShiftDialog.kt    # Diálogo para cargar turnos pasados desde FAB
 │           │   └── screens/
-│           │       ├── HomeScreen.kt           # Pantalla principal con registro directo
-│           │       ├── HistoryScreen.kt        # Pantalla de historial con filtros
-│           │       └── SettingsScreen.kt       # Configuración y estadísticas históricas
+│           │       ├── HomeScreen.kt           # Pantalla principal de registro
+│           │       ├── HistoryScreen.kt        # Pantalla de historial con edición y compartir
+│           │       └── SettingsScreen.kt       # Configuración, backup/restore y estadísticas
 │           └── viewmodel/
-│               └── WorkHoursViewModel.kt       # Lógica reactiva de cálculo de ingresos y estados
+│               └── WorkHoursViewModel.kt       # Lógica reactiva, horas extras, backup y reportes
 ```├── build.gradle.kts                    # Plugins del proyecto (Gradle, Kotlin, KSP)
 ├── settings.gradle.kts
 └── gradle.properties

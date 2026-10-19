@@ -23,9 +23,9 @@ interface WorkShiftDao {
     @Query("SELECT * FROM work_shifts ORDER BY startTimeMillis DESC")
     fun getAllShifts(): Flow<List<WorkShift>>
 
-    @Query("SELECT * FROM work_shifts WHERE startTimeMillis >= :fromMillis ORDER BY startTimeMillis DESC")
-    fun getShiftsSince(fromMillis: Long): Flow<List<WorkShift>>
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(shifts: List<WorkShift>)
 
-    @Query("SELECT * FROM work_shifts WHERE startTimeMillis >= :startMillis AND startTimeMillis <= :endMillis ORDER BY startTimeMillis DESC")
-    fun getShiftsBetween(startMillis: Long, endMillis: Long): Flow<List<WorkShift>>
+    @Query("DELETE FROM work_shifts")
+    suspend fun deleteAllShifts()
 }

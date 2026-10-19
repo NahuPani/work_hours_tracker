@@ -1,5 +1,8 @@
 package com.example.workhourstracker.ui.screens
 
+import android.content.Context
+import android.content.Intent
+import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -14,10 +17,13 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AttachMoney
+import androidx.compose.material.icons.filled.Backup
 import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.FreeBreakfast
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.QueryStats
+import androidx.compose.material.icons.filled.Restore
 import androidx.compose.material.icons.filled.Security
+import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -28,16 +34,21 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.workhourstracker.ui.components.HourlyRateDialog
+import com.example.workhourstracker.ui.components.OvertimeDialog
+import com.example.workhourstracker.ui.components.RestoreDialog
 import com.example.workhourstracker.ui.theme.AccentEmerald
 import com.example.workhourstracker.ui.viewmodel.WorkHoursViewModel
+import kotlinx.coroutines.launch
 import java.util.Locale
 
 @Composable
@@ -45,12 +56,22 @@ fun SettingsScreen(
     viewModel: WorkHoursViewModel,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+
     val hourlyRate by viewModel.hourlyRate.collectAsState()
     val currencySymbol by viewModel.currencySymbol.collectAsState()
+    val standardDailyHours by viewModel.standardDailyHours.collectAsState()
+    val overtimeMultiplier by viewModel.overtimeMultiplier.collectAsState()
+    val enableOvertime by viewModel.enableOvertime.collectAsState()
+    val defaultBreakMinutes by viewModel.defaultBreakMinutes.collectAsState()
+
     val summary by viewModel.earningsSummary.collectAsState()
     val shifts by viewModel.allShifts.collectAsState()
 
     var showRateDialog by remember { mutableStateOf(false) }
+    var showOvertimeDialog by remember { mutableStateOf(false) }
+    var showRestoreDialog by remember { mutableStateOf(false) }
 
     if (showRateDialog) {
         HourlyRateDialog(
@@ -60,6 +81,36 @@ fun SettingsScreen(
             onConfirm = { newRate, newSymbol ->
                 viewModel.updateHourlyRate(newRate, newSymbol)
                 showRateDialog = false
+            }
+        )
+    }
+
+    if (showOvertimeDialog) {
+        OvertimeDialog(
+            currentStandardHours = standardDailyHours,
+            currentMultiplier = overtimeMultiplier,
+            currentEnabled = enableOvertime,
+            onDismiss = { showOvertimeDialog = false },
+            onConfirm = { stdHours, mult, enabled ->
+                viewModel.updateOvertimeSettings(stdHours, mult, enabled)
+                showOvertimeDialog = false
+            }
+        )
+    }
+
+    if (showRestoreDialog) {
+        RestoreDialog(
+            onDismiss = { showRestoreDialog = false },
+            onConfirm = { json ->
+                coroutineScope.launch {
+                    val result = viewModel.restoreBackupJson(json)
+                    showRestoreDialog = false
+                    if (result.isSuccess) {
+                        Toast.makeText(context, "✓ ¡${result.getOrNull()} turnos restaurados con éxito!", Toast.LENGTH_LONG).show()
+                    } else {
+                        Toast.makeText(context, "Error al restaurar: archivo inválido", Toast.LENGTH_LONG).show()
+                    }
+                }
             }
         )
     }
@@ -80,10 +131,10 @@ fun SettingsScreen(
             )
         }
 
-        // Section: Configuración de Ganancias
+        // Section: Configuración de Ganancias y Horas
         item {
             Text(
-                text = "Tarifas y Moneda",
+                text = "Tarifas y Jornada",
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary
@@ -96,20 +147,49 @@ fun SettingsScreen(
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
             ) {
-                val rateFormatted = if (hourlyRate % 1.0 == 0.0) hourlyRate.toInt().toString() else String.format(Locale.US, "%.2f", hourlyRate)
-                SettingsItem(
-                    icon = Icons.Default.AttachMoney,
-                    title = "Pago por Hora",
-                    subtitle = "$currencySymbol$rateFormatted por hora trabajada",
-                    onClick = { showRateDialog = true }
-                )
+                Column {
+                    val rateFormatted = if (hourlyRate % 1.0 == 0.0) hourlyRate.toInt().toString() else String.format(Locale.US, "%.2f", hourlyRate)
+                    SettingsItem(
+                        icon = Icons.Default.AttachMoney,
+                        title = "Pago por Hora",
+                        subtitle = "$currencySymbol$rateFormatted por hora normal",
+                        onClick = { showRateDialog = true }
+                    )
+
+                    SettingsItem(
+                        icon = Icons.Default.TrendingUp,
+                        title = "Horas Extras",
+                        subtitle = if (enableOvertime) {
+                            "Jornada de ${standardDailyHours.toInt()}h (+${((overtimeMultiplier - 1.0) * 100).toInt()}% en extras)"
+                        } else {
+                            "Desactivadas"
+                        },
+                        onClick = { showOvertimeDialog = true }
+                    )
+
+                    SettingsItem(
+                        icon = Icons.Default.FreeBreakfast,
+                        title = "Descanso por Defecto",
+                        subtitle = if (defaultBreakMinutes > 0) "$defaultBreakMinutes minutos" else "Sin descanso automático",
+                        onClick = {
+                            val nextBreak = when (defaultBreakMinutes) {
+                                0 -> 30
+                                30 -> 45
+                                45 -> 60
+                                else -> 0
+                            }
+                            viewModel.updateDefaultBreak(nextBreak)
+                            Toast.makeText(context, "Descanso por defecto: ${if (nextBreak > 0) "$nextBreak min" else "0 min"}", Toast.LENGTH_SHORT).show()
+                        }
+                    )
+                }
             }
         }
 
         // Section: Resumen General Histórico
         item {
             Text(
-                text = "Estadísticas Totales",
+                text = "Estadísticas Globales",
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary
@@ -128,21 +208,15 @@ fun SettingsScreen(
                     val totalM = totalMinutes % 60
                     val formattedEarnings = String.format(Locale.getDefault(), "%,.2f", summary.totalEarnings)
 
+                    val regHours = shifts.sumOf { it.regularHours }
+                    val extraHours = shifts.sumOf { it.overtimeHours }
+
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text(
-                            text = "Total de turnos completados:",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Text(
-                            text = "${shifts.size}",
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
+                        Text("Total de turnos:", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("${shifts.size}", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
                     }
 
                     Spacer(modifier = Modifier.height(8.dp))
@@ -151,17 +225,19 @@ fun SettingsScreen(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text(
-                            text = "Horas totales acumuladas:",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Text(
-                            text = "${totalH}h ${totalM}m",
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
+                        Text("Horas totales acumuladas:", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("${totalH}h ${totalM}m", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
+                    }
+
+                    if (extraHours > 0.0) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text("Horas extras incluidas:", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text("${String.format(Locale.US, "%.1f", extraHours)}h", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                        }
                     }
 
                     Spacer(modifier = Modifier.height(8.dp))
@@ -170,26 +246,17 @@ fun SettingsScreen(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text(
-                            text = "Ganancias históricas:",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Text(
-                            text = "$currencySymbol$formattedEarnings",
-                            style = MaterialTheme.typography.bodyLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = AccentEmerald
-                        )
+                        Text("Ganancias históricas:", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("$currencySymbol$formattedEarnings", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold, color = AccentEmerald)
                     }
                 }
             }
         }
 
-        // Section: Privacidad y Almacenamiento
+        // Section: Copia de Seguridad y Restauración
         item {
             Text(
-                text = "Privacidad y Datos",
+                text = "Copia de Seguridad y Datos",
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary
@@ -202,6 +269,34 @@ fun SettingsScreen(
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
             ) {
+                Column {
+                    SettingsItem(
+                        icon = Icons.Default.Backup,
+                        title = "Exportar Copia de Seguridad",
+                        subtitle = "Guarda o envía tus registros en archivo JSON",
+                        onClick = {
+                            val backupJson = viewModel.exportBackupJson()
+                            shareBackupText(context, backupJson)
+                        }
+                    )
+
+                    SettingsItem(
+                        icon = Icons.Default.Restore,
+                        title = "Restaurar Copia de Seguridad",
+                        subtitle = "Importa registros desde un respaldo previo",
+                        onClick = { showRestoreDialog = true }
+                    )
+                }
+            }
+        }
+
+        // Section: Privacidad y Almacenamiento
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+            ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
@@ -213,12 +308,12 @@ fun SettingsScreen(
                         Spacer(modifier = Modifier.size(12.dp))
                         Column {
                             Text(
-                                text = "Base de datos local",
+                                text = "Base de datos 100% local y privada",
                                 style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.Bold
                             )
                             Text(
-                                text = "Tus registros de horas y ganancias se guardan únicamente en la memoria de tu teléfono (Room SQLite), sin servidores externos ni seguimiento.",
+                                text = "Tus registros se guardan únicamente en tu teléfono (Room SQLite), sin publicidad, sin servidores externos y con total privacidad.",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -230,30 +325,25 @@ fun SettingsScreen(
 
         // Section: Info
         item {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Info,
-                        contentDescription = "Información",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(modifier = Modifier.size(12.dp))
-                    Text(
-                        text = "Control de Horas v1.0 • Desarrollado con Jetpack Compose y Material 3",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
+                Icon(
+                    imageVector = Icons.Default.Info,
+                    contentDescription = "Información",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(modifier = Modifier.size(8.dp))
+                Text(
+                    text = "Control de Horas v1.2 • Jetpack Compose & Material 3",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
 
@@ -311,4 +401,15 @@ private fun SettingsItem(
             tint = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
+}
+
+private fun shareBackupText(context: Context, backupJson: String) {
+    val sendIntent = Intent().apply {
+        action = Intent.ACTION_SEND
+        putExtra(Intent.EXTRA_SUBJECT, "Copia de Seguridad - Control de Horas.json")
+        putExtra(Intent.EXTRA_TEXT, backupJson)
+        type = "application/json"
+    }
+    val shareIntent = Intent.createChooser(sendIntent, "Guardar o compartir copia de seguridad")
+    context.startActivity(shareIntent)
 }

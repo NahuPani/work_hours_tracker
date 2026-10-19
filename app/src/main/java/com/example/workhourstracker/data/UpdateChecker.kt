@@ -35,40 +35,47 @@ object UpdateChecker {
             var notes = ""
             var downloadUrl = "https://github.com/NahuPani/work_hours_tracker/releases"
 
-            // 1. Try GitHub Releases API first
+            // 1. Check version.json from repository main branch (direct, no GitHub API rate-limit)
             try {
-                val json = httpGetJson(GITHUB_RELEASE_API)
-                if (json != null) {
-                    latestVer = json.optString("tag_name", "").removePrefix("v").trim()
-                    notes = json.optString("body", "").trim()
-                    val htmlUrl = json.optString("html_url", downloadUrl)
-                    downloadUrl = htmlUrl
+                val rawJson = httpGetJson(RAW_VERSION_URL)
+                if (rawJson != null) {
+                    val rawVer = rawJson.optString("version", "").removePrefix("v").removePrefix("V").trim()
+                    if (rawVer.isNotBlank()) {
+                        latestVer = rawVer
+                        notes = rawJson.optString("releaseNotes", "")
+                        downloadUrl = rawJson.optString("downloadUrl", downloadUrl)
+                    }
+                }
+            } catch (e: Exception) {
+                // Ignore and try releases API
+            }
 
-                    // Check if an .apk asset was uploaded to the release
-                    val assets = json.optJSONArray("assets")
-                    if (assets != null && assets.length() > 0) {
-                        for (i in 0 until assets.length()) {
-                            val asset = assets.getJSONObject(i)
-                            val name = asset.optString("name", "")
-                            if (name.endsWith(".apk", ignoreCase = true)) {
-                                downloadUrl = asset.optString("browser_download_url", downloadUrl)
-                                break
+            // 2. Check GitHub Releases API and prioritize whichever version is newer
+            try {
+                val releaseJson = httpGetJson(GITHUB_RELEASE_API)
+                if (releaseJson != null) {
+                    val releaseVer = releaseJson.optString("tag_name", "").removePrefix("v").removePrefix("V").trim()
+                    if (releaseVer.isNotBlank() && (latestVer.isBlank() || isVersionNewer(releaseVer, latestVer))) {
+                        latestVer = releaseVer
+                        notes = releaseJson.optString("body", notes).trim()
+                        downloadUrl = releaseJson.optString("html_url", downloadUrl)
+
+                        // Check if an .apk asset was uploaded to the release
+                        val assets = releaseJson.optJSONArray("assets")
+                        if (assets != null && assets.length() > 0) {
+                            for (i in 0 until assets.length()) {
+                                val asset = assets.getJSONObject(i)
+                                val name = asset.optString("name", "")
+                                if (name.endsWith(".apk", ignoreCase = true)) {
+                                    downloadUrl = asset.optString("browser_download_url", downloadUrl)
+                                    break
+                                }
                             }
                         }
                     }
                 }
             } catch (e: Exception) {
-                // Ignore and fall back to raw version.json
-            }
-
-            // 2. Fallback to raw version.json
-            if (latestVer.isBlank()) {
-                val rawJson = httpGetJson(RAW_VERSION_URL)
-                if (rawJson != null) {
-                    latestVer = rawJson.optString("version", "").removePrefix("v").trim()
-                    notes = rawJson.optString("releaseNotes", "")
-                    downloadUrl = rawJson.optString("downloadUrl", downloadUrl)
-                }
+                // Ignore
             }
 
             if (latestVer.isBlank()) {

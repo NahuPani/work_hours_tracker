@@ -1,6 +1,6 @@
 {
-  "version": "1.2.0",
-  "versionCode": 2,
+  "version": "1.2.1",
+  "versionCode": 3,
   "downloadUrl": "https://github.com/NahuPani/work_hours_tracker/raw/main/release/work_hours_tracker_latest.apk",
-  "releaseNotes": "Versión 1.2.0: Persistencia de borrador de turno en segundo plano, ciclo de trabajo semanal de Miércoles a Martes, mejoras en la base de datos y verificador de actualizaciones."
+  "releaseNotes": "Versión 1.2.1: Mejoras en el diálogo y sistema de descarga e instalación directa de actualizaciones."
 }

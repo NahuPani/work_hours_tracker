@@ -109,10 +109,9 @@ fun UpdateAvailableDialog(
                 }
 
                 Text(
-                    text = "Presiona aquí para descargar e instalar la actualización.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.onSurface
+                    text = "Al presionar el botón se descargará el instalador (.apk). Una vez finalizada la descarga, abrí el archivo desde tus notificaciones o carpeta de Descargas para actualizar la app.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         },
@@ -144,11 +143,20 @@ fun UpdateAvailableDialog(
 
 private fun openDownloadUrl(context: Context, url: String) {
     try {
+        android.widget.Toast.makeText(
+            context,
+            "Iniciando descarga... Al finalizar, abrí el archivo para instalarlo.",
+            android.widget.Toast.LENGTH_LONG
+        ).show()
         val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK
         }
         context.startActivity(intent)
     } catch (e: Exception) {
-        // Fallback
+        android.widget.Toast.makeText(
+            context,
+            "No se pudo abrir el navegador para descargar: ${e.localizedMessage ?: "error"}",
+            android.widget.Toast.LENGTH_LONG
+        ).show()
     }
 }

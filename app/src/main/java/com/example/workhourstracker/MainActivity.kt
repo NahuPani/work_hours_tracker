@@ -56,6 +56,11 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
+    override fun onResume() {
+        super.onResume()
+        com.example.workhourstracker.widget.MiTurnoWidgetProvider.updateAllWidgets(this)
+    }
 }
 
 @Composable

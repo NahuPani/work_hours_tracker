@@ -32,12 +32,13 @@
             android:textSize="11sp" />
     </LinearLayout>
 
-    <View
+    <ImageView
         android:layout_width="match_parent"
         android:layout_height="1dp"
         android:layout_marginTop="8dp"
         android:layout_marginBottom="10dp"
-        android:background="#1E293B" />
+        android:background="#1E293B"
+        android:contentDescription="@null" />
 
     <!-- Center Stats Row: Hours & Money -->
     <LinearLayout

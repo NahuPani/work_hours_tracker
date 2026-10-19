@@ -118,6 +118,7 @@ class WorkHoursViewModel(application: Application) : AndroidViewModel(applicatio
     init {
         // Automatically check for updates on app startup silently
         checkForUpdates()
+        com.example.workhourstracker.widget.MiTurnoWidgetProvider.updateAllWidgets(application)
     }
 
     fun checkForUpdates(onComplete: ((UpdateInfo?) -> Unit)? = null) {

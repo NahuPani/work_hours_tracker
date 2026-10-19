@@ -19,7 +19,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material.icons.filled.Backup
 import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.FreeBreakfast
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Restore
 import androidx.compose.material.icons.filled.Security
@@ -64,7 +63,6 @@ fun SettingsScreen(
     val standardDailyHours by viewModel.standardDailyHours.collectAsState()
     val overtimeMultiplier by viewModel.overtimeMultiplier.collectAsState()
     val enableOvertime by viewModel.enableOvertime.collectAsState()
-    val defaultBreakMinutes by viewModel.defaultBreakMinutes.collectAsState()
 
     val summary by viewModel.earningsSummary.collectAsState()
     val shifts by viewModel.allShifts.collectAsState()
@@ -166,22 +164,6 @@ fun SettingsScreen(
                         },
                         onClick = { showOvertimeDialog = true }
                     )
-
-                    SettingsItem(
-                        icon = Icons.Default.FreeBreakfast,
-                        title = "Descanso por Defecto",
-                        subtitle = if (defaultBreakMinutes > 0) "$defaultBreakMinutes minutos" else "Sin descanso automático",
-                        onClick = {
-                            val nextBreak = when (defaultBreakMinutes) {
-                                0 -> 30
-                                30 -> 45
-                                45 -> 60
-                                else -> 0
-                            }
-                            viewModel.updateDefaultBreak(nextBreak)
-                            Toast.makeText(context, "Descanso por defecto: ${if (nextBreak > 0) "$nextBreak min" else "0 min"}", Toast.LENGTH_SHORT).show()
-                        }
-                    )
                 }
             }
         }
@@ -208,7 +190,6 @@ fun SettingsScreen(
                     val totalM = totalMinutes % 60
                     val formattedEarnings = String.format(Locale.getDefault(), "%,.2f", summary.totalEarnings)
 
-                    val regHours = shifts.sumOf { it.regularHours }
                     val extraHours = shifts.sumOf { it.overtimeHours }
 
                     Row(

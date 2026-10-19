@@ -1,13 +1,17 @@
 package com.example.workhourstracker.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
@@ -22,11 +26,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.workhourstracker.ui.theme.AccentEmerald
+import com.example.workhourstracker.ui.theme.AccentPurple
+import com.example.workhourstracker.ui.theme.PrimaryBlue
 import com.example.workhourstracker.ui.viewmodel.EarningsSummary
 import java.util.Locale
 
@@ -37,8 +44,14 @@ fun EarningsSummaryCard(
     modifier: Modifier = Modifier
 ) {
     Card(
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
+        modifier = modifier
+            .fillMaxWidth()
+            .border(
+                width = 1.dp,
+                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
+                shape = RoundedCornerShape(26.dp)
+            ),
+        shape = RoundedCornerShape(26.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
@@ -49,41 +62,56 @@ fun EarningsSummaryCard(
                 .fillMaxWidth()
                 .padding(20.dp)
         ) {
-            Text(
-                text = "Resumen de Ganancias",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Resumen de Ingresos",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    text = "Acumulados",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
             Spacer(modifier = Modifier.height(16.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                SummaryColumn(
+                ModernSummaryPill(
                     title = "Hoy",
                     icon = Icons.Default.Today,
                     earnings = summary.todayEarnings,
                     hours = summary.todayHours,
+                    accentColor = PrimaryBlue,
                     currencySymbol = currencySymbol,
                     modifier = Modifier.weight(1f)
                 )
 
-                SummaryColumn(
+                ModernSummaryPill(
                     title = "Semana",
                     icon = Icons.Default.DateRange,
                     earnings = summary.weekEarnings,
                     hours = summary.weekHours,
+                    accentColor = AccentPurple,
                     currencySymbol = currencySymbol,
                     modifier = Modifier.weight(1f)
                 )
 
-                SummaryColumn(
+                ModernSummaryPill(
                     title = "Mes",
                     icon = Icons.Default.CalendarMonth,
                     earnings = summary.monthEarnings,
                     hours = summary.monthHours,
+                    accentColor = AccentEmerald,
                     currencySymbol = currencySymbol,
                     modifier = Modifier.weight(1f)
                 )
@@ -93,11 +121,12 @@ fun EarningsSummaryCard(
 }
 
 @Composable
-private fun SummaryColumn(
+private fun ModernSummaryPill(
     title: String,
     icon: ImageVector,
     earnings: Double,
     hours: Double,
+    accentColor: Color,
     currencySymbol: String,
     modifier: Modifier = Modifier
 ) {
@@ -105,40 +134,65 @@ private fun SummaryColumn(
     val h = totalMinutes / 60
     val m = totalMinutes % 60
     val durationText = "${h}h ${m}m"
-
     val formattedAmount = String.format(Locale.getDefault(), "%,.0f", earnings)
 
-    Column(
+    Box(
         modifier = modifier
-            .clip(RoundedCornerShape(14.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-            .padding(vertical = 12.dp, horizontal = 8.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+            .clip(RoundedCornerShape(18.dp))
+            .background(accentColor.copy(alpha = 0.08f))
+            .border(
+                width = 1.dp,
+                color = accentColor.copy(alpha = 0.2f),
+                shape = RoundedCornerShape(18.dp)
+            )
+            .padding(vertical = 14.dp, horizontal = 10.dp)
     ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = title,
-            tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.padding(bottom = 4.dp)
-        )
-        Text(
-            text = title,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Spacer(modifier = Modifier.height(6.dp))
-        Text(
-            text = "$currencySymbol$formattedAmount",
-            fontSize = 15.sp,
-            fontWeight = FontWeight.Bold,
-            color = AccentEmerald,
-            maxLines = 1
-        )
-        Spacer(modifier = Modifier.height(2.dp))
-        Text(
-            text = durationText,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(28.dp)
+                    .clip(CircleShape)
+                    .background(accentColor.copy(alpha = 0.15f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = title,
+                    tint = accentColor,
+                    modifier = Modifier.size(15.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(6.dp))
+
+            Text(
+                text = title,
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = "$currencySymbol$formattedAmount",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Black,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1
+            )
+
+            Spacer(modifier = Modifier.height(3.dp))
+
+            Text(
+                text = durationText,
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = accentColor
+            )
+        }
     }
 }

@@ -52,9 +52,6 @@ class WorkHoursViewModel(application: Application) : AndroidViewModel(applicatio
     private val _enableOvertime = MutableStateFlow(prefs.enableOvertime)
     val enableOvertime: StateFlow<Boolean> = _enableOvertime.asStateFlow()
 
-    private val _defaultBreakMinutes = MutableStateFlow(prefs.defaultBreakMinutes)
-    val defaultBreakMinutes: StateFlow<Int> = _defaultBreakMinutes.asStateFlow()
-
     // Calculated summary of all recorded shifts
     val earningsSummary: StateFlow<EarningsSummary> = allShifts.map { shifts ->
         calculateEarningsSummary(shifts)
@@ -64,8 +61,6 @@ class WorkHoursViewModel(application: Application) : AndroidViewModel(applicatio
         startTimeMillis: Long,
         endTimeMillis: Long,
         hourlyRate: Double = _hourlyRate.value,
-        breakMinutes: Int = _defaultBreakMinutes.value,
-        isBreakPaid: Boolean = true,
         standardDailyHours: Double = if (_enableOvertime.value) _standardDailyHours.value else 0.0,
         overtimeMultiplier: Double = if (_enableOvertime.value) _overtimeMultiplier.value else 1.0,
         note: String = ""
@@ -75,8 +70,8 @@ class WorkHoursViewModel(application: Application) : AndroidViewModel(applicatio
                 startTimeMillis = startTimeMillis,
                 endTimeMillis = endTimeMillis,
                 hourlyRate = hourlyRate,
-                breakMinutes = breakMinutes,
-                isBreakPaid = isBreakPaid,
+                breakMinutes = 0,
+                isBreakPaid = true,
                 standardDailyHours = standardDailyHours,
                 overtimeMultiplier = overtimeMultiplier,
                 note = note.trim()
@@ -112,11 +107,6 @@ class WorkHoursViewModel(application: Application) : AndroidViewModel(applicatio
         _standardDailyHours.value = standardHours
         _overtimeMultiplier.value = multiplier
         _enableOvertime.value = enabled
-    }
-
-    fun updateDefaultBreak(minutes: Int) {
-        prefs.defaultBreakMinutes = minutes
-        _defaultBreakMinutes.value = minutes
     }
 
     // Export report for WhatsApp / clipboard sharing
@@ -158,7 +148,7 @@ class WorkHoursViewModel(application: Application) : AndroidViewModel(applicatio
     // Export shifts to CSV for Excel
     fun exportToCsv(shifts: List<WorkShift>): String {
         val sb = StringBuilder()
-        sb.appendLine("ID,Fecha,Entrada,Salida,Descanso_Min,Horas_Normales,Horas_Extras,Horas_Totales,Tarifa_Hora,Total_Cobrar,Nota")
+        sb.appendLine("ID,Fecha,Entrada,Salida,Horas_Normales,Horas_Extras,Horas_Totales,Tarifa_Hora,Total_Cobrar,Nota")
         val timeFmt = java.text.SimpleDateFormat("HH:mm", Locale.getDefault())
 
         shifts.forEach { s ->
@@ -167,7 +157,7 @@ class WorkHoursViewModel(application: Application) : AndroidViewModel(applicatio
             val end = timeFmt.format(Date(s.endTimeMillis))
             val noteClean = s.note.replace(",", " ").replace("\n", " ")
             sb.appendLine(
-                "${s.id},\"$date\",$start,$end,${s.breakMinutes}," +
+                "${s.id},\"$date\",$start,$end," +
                         "${String.format(Locale.US, "%.2f", s.regularHours)}," +
                         "${String.format(Locale.US, "%.2f", s.overtimeHours)}," +
                         "${String.format(Locale.US, "%.2f", s.durationHours)}," +

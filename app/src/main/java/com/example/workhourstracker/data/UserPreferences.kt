@@ -14,7 +14,6 @@ class UserPreferences(context: Context) {
         private const val KEY_STANDARD_DAILY_HOURS = "key_standard_daily_hours"
         private const val KEY_OVERTIME_MULTIPLIER = "key_overtime_multiplier"
         private const val KEY_ENABLE_OVERTIME = "key_enable_overtime"
-        private const val KEY_DEFAULT_BREAK = "key_default_break"
     }
 
     var hourlyRate: Double
@@ -36,8 +35,4 @@ class UserPreferences(context: Context) {
     var enableOvertime: Boolean
         get() = prefs.getBoolean(KEY_ENABLE_OVERTIME, true)
         set(value) = prefs.edit().putBoolean(KEY_ENABLE_OVERTIME, value).apply()
-
-    var defaultBreakMinutes: Int
-        get() = prefs.getInt(KEY_DEFAULT_BREAK, 0)
-        set(value) = prefs.edit().putInt(KEY_DEFAULT_BREAK, value).apply()
 }

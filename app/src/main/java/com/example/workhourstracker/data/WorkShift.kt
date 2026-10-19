@@ -70,11 +70,6 @@ data class WorkShift(
         val totalMinutes = (durationMillis / 60000).toInt()
         val hours = totalMinutes / 60
         val minutes = totalMinutes % 60
-        val base = if (hours > 0) "${hours}h ${minutes}m" else "${minutes}m"
-        return if (breakMinutes > 0) {
-            if (isBreakPaid) "$base (inc. ${breakMinutes}m descanso pago)" else "$base (descanso: ${breakMinutes}m)"
-        } else {
-            base
-        }
+        return if (hours > 0) "${hours}h ${minutes}m" else "${minutes}m"
     }
 }

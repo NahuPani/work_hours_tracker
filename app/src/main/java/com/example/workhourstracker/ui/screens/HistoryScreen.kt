@@ -2,6 +2,8 @@ package com.example.workhourstracker.ui.screens
 
 import android.content.Context
 import android.content.Intent
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -55,6 +57,7 @@ import com.example.workhourstracker.ui.components.EditShiftDialog
 import com.example.workhourstracker.ui.components.ManualShiftDialog
 import com.example.workhourstracker.ui.theme.AccentCoral
 import com.example.workhourstracker.ui.theme.AccentEmerald
+import com.example.workhourstracker.ui.theme.AccentPurple
 import com.example.workhourstracker.ui.viewmodel.WorkHoursViewModel
 import java.util.Calendar
 import java.util.Locale
@@ -276,41 +279,53 @@ fun HistoryScreen(
                 val formattedTotalEarnings = String.format(Locale.getDefault(), "%,.2f", totalEarnings)
 
                 Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .border(
+                            width = 1.dp,
+                            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
+                            shape = RoundedCornerShape(22.dp)
+                        ),
+                    shape = RoundedCornerShape(22.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f)
+                    )
                 ) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(16.dp),
+                            .padding(horizontal = 20.dp, vertical = 18.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column {
                             Text(
-                                text = "Total de Horas",
-                                style = MaterialTheme.typography.labelMedium,
+                                text = "HORAS ACUMULADAS",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
+                            Spacer(modifier = Modifier.height(4.dp))
                             Text(
                                 text = "${h}h ${m}m",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Black,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                         }
 
                         Column(horizontalAlignment = Alignment.End) {
                             Text(
-                                text = "Total Ganado",
-                                style = MaterialTheme.typography.labelMedium,
+                                text = "TOTAL GENERADO",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
+                            Spacer(modifier = Modifier.height(4.dp))
                             Text(
                                 text = "$currencySymbol$formattedTotalEarnings",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Black,
                                 color = AccentEmerald
                             )
                         }
@@ -363,10 +378,15 @@ fun ShiftHistoryCard(
     Card(
         modifier = modifier
             .fillMaxWidth()
+            .border(
+                width = 1.dp,
+                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.15f),
+                shape = RoundedCornerShape(20.dp)
+            )
             .clickable(onClick = onEdit),
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(
             modifier = Modifier
@@ -378,41 +398,53 @@ fun ShiftHistoryCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = shift.formattedDate(),
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .width(4.dp)
+                            .height(26.dp)
+                            .clip(RoundedCornerShape(2.dp))
+                            .background(
+                                if (shift.overtimeHours > 0) AccentPurple else MaterialTheme.colorScheme.primary
+                            )
+                    )
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Text(
+                        text = shift.formattedDate(),
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
 
-                Row {
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     IconButton(
                         onClick = onEdit,
-                        modifier = Modifier.size(28.dp)
+                        modifier = Modifier.size(32.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Default.Edit,
                             contentDescription = "Editar",
-                            tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f),
+                            tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(18.dp)
                         )
                     }
-                    Spacer(modifier = Modifier.width(6.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
                     IconButton(
                         onClick = onDelete,
-                        modifier = Modifier.size(28.dp)
+                        modifier = Modifier.size(32.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Default.DeleteOutline,
                             contentDescription = "Eliminar",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                            tint = MaterialTheme.colorScheme.error.copy(alpha = 0.75f),
                             modifier = Modifier.size(18.dp)
                         )
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -423,6 +455,7 @@ fun ShiftHistoryCard(
                     Text(
                         text = "Horario: ${shift.formattedTimeRange()}",
                         style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
@@ -432,19 +465,19 @@ fun ShiftHistoryCard(
                     )
 
                     if (shift.overtimeHours > 0.0) {
-                        Spacer(modifier = Modifier.height(2.dp))
+                        Spacer(modifier = Modifier.height(4.dp))
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(
                                 imageVector = Icons.Default.TrendingUp,
                                 contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(12.dp)
+                                tint = AccentPurple,
+                                modifier = Modifier.size(14.dp)
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
                                 text = "Extras: ${String.format(Locale.US, "%.1f", shift.overtimeHours)}h (+${((shift.overtimeMultiplier - 1.0) * 100).toInt()}%)",
                                 style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.primary,
+                                color = AccentPurple,
                                 fontWeight = FontWeight.Bold
                             )
                         }
@@ -465,13 +498,13 @@ fun ShiftHistoryCard(
                     val formattedEarnings = String.format(Locale.getDefault(), "%,.2f", shift.totalEarnings)
                     Text(
                         text = "$currencySymbol$formattedEarnings",
-                        fontSize = 18.sp,
+                        fontSize = 20.sp,
                         fontWeight = FontWeight.ExtraBold,
                         color = AccentEmerald
                     )
                     val rateFormatted = if (shift.hourlyRate % 1.0 == 0.0) shift.hourlyRate.toInt().toString() else String.format(Locale.US, "%.2f", shift.hourlyRate)
                     Text(
-                        text = "($currencySymbol$rateFormatted/h)",
+                        text = "$currencySymbol$rateFormatted / hora",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

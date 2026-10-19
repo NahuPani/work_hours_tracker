@@ -78,7 +78,6 @@ fun EditShiftDialog(
     var startMinute by remember { mutableIntStateOf(initialStartCal.get(Calendar.MINUTE)) }
     var endHour by remember { mutableIntStateOf(initialEndCal.get(Calendar.HOUR_OF_DAY)) }
     var endMinute by remember { mutableIntStateOf(initialEndCal.get(Calendar.MINUTE)) }
-    var breakMinutes by remember { mutableIntStateOf(shift.breakMinutes) }
 
     var rateInput by remember {
         mutableStateOf(
@@ -218,29 +217,7 @@ fun EditShiftDialog(
                     )
                 }
 
-                Spacer(modifier = Modifier.height(12.dp))
-
-                // Break Options
-                Text(
-                    text = "Descanso / Almuerzo:",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    listOf(0 to "0m", 15 to "15m", 30 to "30m", 45 to "45m", 60 to "1h").forEach { (mins, label) ->
-                        FilterChip(
-                            selected = breakMinutes == mins,
-                            onClick = { breakMinutes = mins },
-                            label = { Text(label, fontSize = 11.sp) }
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(14.dp))
 
                 // Hourly Rate Input
                 OutlinedTextField(
@@ -280,7 +257,7 @@ fun EditShiftDialog(
                     ) {
                         Column {
                             Text(
-                                text = if (breakMinutes > 0) "Tiempo (inc. ${breakMinutes}m descanso pago):" else "Tiempo trabajado:",
+                                text = "Tiempo trabajado:",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -311,7 +288,6 @@ fun EditShiftDialog(
                         startTimeMillis = startCal.timeInMillis,
                         endTimeMillis = endCal.timeInMillis,
                         hourlyRate = rate,
-                        breakMinutes = breakMinutes,
                         note = noteInput.trim()
                     )
                     onConfirm(updated)

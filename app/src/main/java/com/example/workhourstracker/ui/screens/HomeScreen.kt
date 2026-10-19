@@ -1,6 +1,7 @@
 package com.example.workhourstracker.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -59,7 +60,6 @@ fun HomeScreen(
     val standardDailyHours by viewModel.standardDailyHours.collectAsState()
     val overtimeMultiplier by viewModel.overtimeMultiplier.collectAsState()
     val enableOvertime by viewModel.enableOvertime.collectAsState()
-    val defaultBreakMinutes by viewModel.defaultBreakMinutes.collectAsState()
     val summary by viewModel.earningsSummary.collectAsState()
     val shifts by viewModel.allShifts.collectAsState()
 
@@ -99,7 +99,7 @@ fun HomeScreen(
                     Text(
                         text = "Mi Jornada",
                         style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Bold,
+                        fontWeight = FontWeight.Black,
                         color = MaterialTheme.colorScheme.onBackground
                     )
                     Text(
@@ -112,10 +112,10 @@ fun HomeScreen(
                 // Hourly Rate Chip
                 Box(
                     modifier = Modifier
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(MaterialTheme.colorScheme.primaryContainer)
+                        .clip(RoundedCornerShape(50))
+                        .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f))
                         .clickable { showRateDialog = true }
-                        .padding(horizontal = 12.dp, vertical = 8.dp)
+                        .padding(horizontal = 14.dp, vertical = 8.dp)
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
@@ -151,13 +151,11 @@ fun HomeScreen(
                 standardDailyHours = standardDailyHours,
                 overtimeMultiplier = overtimeMultiplier,
                 enableOvertime = enableOvertime,
-                defaultBreakMinutes = defaultBreakMinutes,
-                onSaveShift = { startTime, endTime, rate, breakMin, stdHours, extraMultiplier, note ->
+                onSaveShift = { startTime, endTime, rate, stdHours, extraMultiplier, note ->
                     viewModel.addShift(
                         startTimeMillis = startTime,
                         endTimeMillis = endTime,
                         hourlyRate = rate,
-                        breakMinutes = breakMin,
                         standardDailyHours = stdHours,
                         overtimeMultiplier = extraMultiplier,
                         note = note
@@ -242,39 +240,61 @@ fun RecentShiftItem(
     modifier: Modifier = Modifier
 ) {
     Card(
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
+        modifier = modifier
+            .fillMaxWidth()
+            .border(
+                width = 1.dp,
+                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.15f),
+                shape = RoundedCornerShape(20.dp)
+            ),
+        shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(18.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = shift.formattedShortDate(),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.weight(1f)
+            ) {
+                // Colored left accent bar
+                Box(
+                    modifier = Modifier
+                        .width(4.dp)
+                        .height(36.dp)
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(if (shift.overtimeHours > 0) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.primary)
                 )
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = shift.formattedTimeRange(),
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                if (shift.note.isNotBlank()) {
+
+                Spacer(modifier = Modifier.width(14.dp))
+
+                Column {
                     Text(
-                        text = shift.note,
-                        style = MaterialTheme.typography.bodySmall,
+                        text = shift.formattedDate(),
+                        style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1
+                        fontWeight = FontWeight.SemiBold
                     )
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = shift.formattedTimeRange(),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    if (shift.note.isNotBlank()) {
+                        Text(
+                            text = shift.note,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+                            maxLines = 1
+                        )
+                    }
                 }
             }
 
@@ -283,12 +303,13 @@ fun RecentShiftItem(
                 Text(
                     text = "$currencySymbol$formattedAmount",
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
+                    fontWeight = FontWeight.Black,
                     color = AccentEmerald
                 )
                 Text(
                     text = shift.formattedDuration(),
                     style = MaterialTheme.typography.bodySmall,
+                    fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }

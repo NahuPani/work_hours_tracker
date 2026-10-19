@@ -14,6 +14,8 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 
 data class EarningsSummary(
     val todayHours: Double = 0.0,

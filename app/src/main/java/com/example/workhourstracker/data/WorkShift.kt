@@ -1,0 +1,54 @@
+package com.example.workhourstracker.data
+
+import androidx.room.Entity
+import androidx.room.PrimaryKey
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+
+@Entity(tableName = "work_shifts")
+data class WorkShift(
+    @PrimaryKey(autoGenerate = true)
+    val id: Long = 0,
+    val startTimeMillis: Long,
+    val endTimeMillis: Long,
+    val hourlyRate: Double,
+    val note: String = ""
+) {
+    val durationMillis: Long
+        get() = (endTimeMillis - startTimeMillis).coerceAtLeast(0)
+
+    val durationHours: Double
+        get() = durationMillis / 3600000.0
+
+    val totalEarnings: Double
+        get() = durationHours * hourlyRate
+
+    fun formattedDate(): String {
+        val sdf = SimpleDateFormat("EEEE, d 'de' MMMM yyyy", Locale("es", "ES"))
+        return sdf.format(Date(startTimeMillis)).replaceFirstChar { it.uppercase() }
+    }
+
+    fun formattedShortDate(): String {
+        val sdf = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+        return sdf.format(Date(startTimeMillis))
+    }
+
+    fun formattedTimeRange(): String {
+        val sdf = SimpleDateFormat("HH:mm", Locale.getDefault())
+        val start = sdf.format(Date(startTimeMillis))
+        val end = sdf.format(Date(endTimeMillis))
+        return "$start - $end"
+    }
+
+    fun formattedDuration(): String {
+        val totalMinutes = durationMillis / 60000
+        val hours = totalMinutes / 60
+        val minutes = totalMinutes % 60
+        return if (hours > 0) {
+            "${hours}h ${minutes}m"
+        } else {
+            "${minutes}m"
+        }
+    }
+}

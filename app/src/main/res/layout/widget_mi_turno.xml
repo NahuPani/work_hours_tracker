@@ -7,7 +7,7 @@
     android:orientation="vertical"
     android:padding="16dp">
 
-    <!-- Top Header: Title & Cycle -->
+    <!-- Top Header: Title & Cycle Badge -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -18,94 +18,89 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Mi Turno"
-            android:textColor="#FFFFFF"
-            android:textSize="15sp"
+            android:text="✦ Mi Turno"
+            android:textColor="#F1F5F9"
+            android:textSize="14sp"
             android:textStyle="bold" />
 
         <TextView
             android:id="@+id/widget_cycle_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Esta Semana (Mié-Mar)"
-            android:textColor="#94A3B8"
-            android:textSize="11sp" />
+            android:background="@drawable/widget_cycle_badge"
+            android:paddingStart="8dp"
+            android:paddingTop="3dp"
+            android:paddingEnd="8dp"
+            android:paddingBottom="3dp"
+            android:text="Mié - Mar"
+            android:textColor="#34D399"
+            android:textSize="10sp"
+            android:textStyle="bold" />
     </LinearLayout>
 
-    <ImageView
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginBottom="10dp"
-        android:background="#1E293B"
-        android:contentDescription="@null" />
-
-    <!-- Center Stats Row: Hours & Money -->
+    <!-- Center Section: Big Fintech Total & Hours Pill -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:gravity="center_vertical"
-        android:orientation="horizontal">
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="TOTAL ESTIMADO"
+            android:textColor="#64748B"
+            android:textSize="10sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/widget_earnings_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="1dp"
+            android:includeFontPadding="false"
+            android:text="$0"
+            android:textColor="#10B981"
+            android:textSize="32sp"
+            android:textStyle="bold" />
 
         <LinearLayout
-            android:layout_width="0dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:orientation="vertical">
+            android:layout_marginTop="5dp"
+            android:background="@drawable/widget_pill_bg"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="10dp"
+            android:paddingTop="4dp"
+            android:paddingEnd="10dp"
+            android:paddingBottom="4dp">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="HORAS"
-                android:textColor="#64748B"
-                android:textSize="10sp"
-                android:textStyle="bold" />
+                android:text="⏱ "
+                android:textColor="#94A3B8"
+                android:textSize="11sp" />
 
             <TextView
                 android:id="@+id/widget_hours_text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:text="0h 0m"
-                android:textColor="#F8FAFC"
-                android:textSize="18sp"
-                android:textStyle="bold" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:gravity="end"
-            android:orientation="vertical">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="TOTAL SEMANAL"
-                android:textColor="#64748B"
-                android:textSize="10sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/widget_earnings_text"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:text="$0"
-                android:textColor="#10B981"
-                android:textSize="20sp"
+                android:text="0h 0m registradas"
+                android:textColor="#CBD5E1"
+                android:textSize="12sp"
                 android:textStyle="bold" />
         </LinearLayout>
     </LinearLayout>
 
-    <!-- Bottom Action Button: Registrar Turno -->
+    <!-- Bottom Action Button: Sleek Emerald Pill -->
     <TextView
         android:id="@+id/widget_action_btn"
         android:layout_width="match_parent"
-        android:layout_height="36dp"
-        android:layout_marginTop="8dp"
+        android:layout_height="38dp"
+        android:layout_marginTop="4dp"
         android:background="@drawable/widget_button_bg"
         android:gravity="center"
         android:text="＋ Registrar Turno"

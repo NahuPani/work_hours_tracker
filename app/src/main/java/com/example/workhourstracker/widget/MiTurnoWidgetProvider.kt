@@ -95,19 +95,19 @@ class MiTurnoWidgetProvider : AppWidgetProvider() {
                 val totalMinutes = (weekHours * 60).toInt()
                 val h = totalMinutes / 60
                 val m = totalMinutes % 60
-                val hoursText = "${h}h ${m}m"
+                val hoursText = "${h}h ${m}m registradas"
                 val earningsText = "$currency${String.format(Locale.getDefault(), "%,.0f", weekEarnings)}"
 
                 val dayName = when (startDay) {
-                    Calendar.MONDAY -> "Lun-Dom"
-                    Calendar.TUESDAY -> "Mar-Lun"
-                    Calendar.WEDNESDAY -> "Mié-Mar"
-                    Calendar.THURSDAY -> "Jue-Mié"
-                    Calendar.FRIDAY -> "Vie-Jue"
-                    Calendar.SATURDAY -> "Sáb-Vie"
-                    else -> "Dom-Sáb"
+                    Calendar.MONDAY -> "Lun - Dom"
+                    Calendar.TUESDAY -> "Mar - Lun"
+                    Calendar.WEDNESDAY -> "Mié - Mar"
+                    Calendar.THURSDAY -> "Jue - Mié"
+                    Calendar.FRIDAY -> "Vie - Jue"
+                    Calendar.SATURDAY -> "Sáb - Vie"
+                    else -> "Dom - Sáb"
                 }
-                val cycleText = "Esta semana ($dayName)"
+                val cycleText = dayName
 
                 for (appWidgetId in appWidgetIds) {
                     val views = RemoteViews(context.packageName, R.layout.widget_mi_turno).apply {
@@ -123,9 +123,9 @@ class MiTurnoWidgetProvider : AppWidgetProvider() {
                 e.printStackTrace()
                 for (appWidgetId in appWidgetIds) {
                     val fallbackViews = RemoteViews(context.packageName, R.layout.widget_mi_turno).apply {
-                        setTextViewText(R.id.widget_hours_text, "0h 0m")
+                        setTextViewText(R.id.widget_hours_text, "0h 0m registradas")
                         setTextViewText(R.id.widget_earnings_text, "$0")
-                        setTextViewText(R.id.widget_cycle_text, "Esta semana")
+                        setTextViewText(R.id.widget_cycle_text, "Mié - Mar")
                         setOnClickPendingIntent(R.id.widget_root, pendingIntent)
                         setOnClickPendingIntent(R.id.widget_action_btn, pendingIntent)
                     }

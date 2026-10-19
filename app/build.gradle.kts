@@ -21,10 +21,21 @@ android {
         }
     }
 
+    signingConfigs {
+        create("release") {
+            val debugSigning = getByName("debug")
+            storeFile = debugSigning.storeFile ?: file("${System.getProperty("user.home")}/.android/debug.keystore")
+            storePassword = debugSigning.storePassword ?: "android"
+            keyAlias = debugSigning.keyAlias ?: "androiddebugkey"
+            keyPassword = debugSigning.keyPassword ?: "android"
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
+            signingConfig = signingConfigs.getByName("release")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

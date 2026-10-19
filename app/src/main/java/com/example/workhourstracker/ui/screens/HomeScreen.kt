@@ -123,7 +123,7 @@ fun HomeScreen(
                     }
 
                     Text(
-                        text = "Mi Jornada",
+                        text = "Mi Turno",
                         style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.Black,
                         color = MaterialTheme.colorScheme.onBackground

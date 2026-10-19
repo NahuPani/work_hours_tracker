@@ -472,7 +472,7 @@ fun SettingsScreen(
                 )
                 Spacer(modifier = Modifier.size(8.dp))
                 Text(
-                    text = "Control de Horas v$appVersion • Jetpack Compose & Material 3",
+                    text = "Mi Turno v$appVersion • Jetpack Compose & Material 3",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -537,7 +537,7 @@ private fun SettingsItem(
 
 private fun shareBackupText(context: Context, backupJson: String) {
     try {
-        val fileName = "Control_de_Horas_Backup.json"
+        val fileName = "Mi_Turno_Backup.json"
         val file = java.io.File(context.cacheDir, fileName)
         file.writeText(backupJson)
 
@@ -558,7 +558,7 @@ private fun shareBackupText(context: Context, backupJson: String) {
         // Fallback to text sharing if FileProvider is not configured
         val sendIntent = Intent().apply {
             action = Intent.ACTION_SEND
-            putExtra(Intent.EXTRA_SUBJECT, "Copia de Seguridad - Control de Horas.json")
+            putExtra(Intent.EXTRA_SUBJECT, "Copia de Seguridad - Mi Turno.json")
             putExtra(Intent.EXTRA_TEXT, backupJson)
             type = "application/json"
         }

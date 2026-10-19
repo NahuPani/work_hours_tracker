@@ -52,6 +52,9 @@ fun WeeklyBarChartCard(
     val maxDayHours = remember(weeklyActivity) {
         weeklyActivity.maxOfOrNull { it.durationHours }?.coerceAtLeast(8.0) ?: 8.0
     }
+    val recordEarnings = remember(weeklyActivity) {
+        weeklyActivity.maxOfOrNull { it.earnings }?.takeIf { it > 0 }
+    }
 
     Card(
         modifier = modifier
@@ -146,13 +149,21 @@ fun WeeklyBarChartCard(
                         label = "barHeight"
                     )
 
+                    val isRecord = day.earnings > 0 && day.earnings == recordEarnings
+
                     Column(
                         modifier = Modifier.weight(1f),
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Bottom
                     ) {
-                        // Value on top of bar
+                        // Value on top of bar with record badge
                         if (day.durationHours > 0.0) {
+                            if (isRecord) {
+                                Text(
+                                    text = "🔥",
+                                    fontSize = 11.sp
+                                )
+                            }
                             val hoursFormatted = if (day.durationHours % 1.0 == 0.0) {
                                 "${day.durationHours.toInt()}h"
                             } else {
@@ -161,8 +172,8 @@ fun WeeklyBarChartCard(
                             Text(
                                 text = hoursFormatted,
                                 fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = if (day.overtimeHours > 0) AccentPurple else if (day.isToday) AccentEmerald else MaterialTheme.colorScheme.primary
+                                fontWeight = if (isRecord) FontWeight.Black else FontWeight.Bold,
+                                color = if (isRecord) AccentEmerald else if (day.overtimeHours > 0) AccentPurple else if (day.isToday) AccentEmerald else MaterialTheme.colorScheme.primary
                             )
                         } else {
                             Text(

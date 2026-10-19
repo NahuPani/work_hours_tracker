@@ -11,11 +11,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Savings
 import androidx.compose.material.icons.filled.Today
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -26,6 +28,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
@@ -35,7 +38,6 @@ import com.example.workhourstracker.ui.theme.AccentEmerald
 import com.example.workhourstracker.ui.theme.AccentPurple
 import com.example.workhourstracker.ui.theme.PrimaryBlue
 import com.example.workhourstracker.ui.viewmodel.EarningsSummary
-import java.util.Locale
 
 @Composable
 fun EarningsSummaryCard(
@@ -43,85 +45,145 @@ fun EarningsSummaryCard(
     currencySymbol: String,
     modifier: Modifier = Modifier
 ) {
+    // Luxury Fintech Black & Emerald gradient
+    val cardBrush = Brush.linearGradient(
+        colors = listOf(
+            Color(0xFF0F172A), // Dark Slate
+            Color(0xFF064E3B), // Deep Emerald
+            Color(0xFF022C22)  // Dark Forest
+        )
+    )
+
     Card(
         modifier = modifier
             .fillMaxWidth()
             .border(
                 width = 1.dp,
-                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
+                color = AccentEmerald.copy(alpha = 0.35f),
                 shape = RoundedCornerShape(26.dp)
             ),
         shape = RoundedCornerShape(26.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
     ) {
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(20.dp)
+                .background(cardBrush)
+                .padding(22.dp)
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                // Top Row: Badge & Subtitle
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(32.dp)
+                                .clip(CircleShape)
+                                .background(AccentEmerald.copy(alpha = 0.2f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Savings,
+                                contentDescription = null,
+                                tint = AccentEmerald,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Text(
+                            text = "GANANCIAS ACUMULADAS",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.ExtraBold,
+                            letterSpacing = 1.sp,
+                            color = Color(0xFF94A3B8)
+                        )
+                    }
+
+                    // Cycle pill
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(AccentEmerald.copy(alpha = 0.15f))
+                            .border(1.dp, AccentEmerald.copy(alpha = 0.3f), RoundedCornerShape(20.dp))
+                            .padding(horizontal = 10.dp, vertical = 4.dp)
+                    ) {
+                        Text(
+                            text = "Mié - Mar",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = AccentEmerald
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                // Hero Number: Week Earnings
                 Text(
-                    text = "Resumen de Ingresos",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    text = "Total Esta Semana",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color(0xFFCBD5E1)
                 )
-                Text(
-                    text = "Acumulados",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
+                Spacer(modifier = Modifier.height(2.dp))
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                ModernSummaryPill(
-                    title = "Hoy",
-                    icon = Icons.Default.Today,
-                    earnings = summary.todayEarnings,
-                    hours = summary.todayHours,
-                    accentColor = PrimaryBlue,
+                AnimatedMoneyText(
+                    amount = summary.weekEarnings,
                     currencySymbol = currencySymbol,
-                    modifier = Modifier.weight(1f)
+                    style = MaterialTheme.typography.headlineLarge.copy(fontSize = 34.sp),
+                    color = Color.White,
+                    fontWeight = FontWeight.Black,
+                    decimals = 0
                 )
 
-                ModernSummaryPill(
-                    title = "Semana",
-                    icon = Icons.Default.DateRange,
-                    earnings = summary.weekEarnings,
-                    hours = summary.weekHours,
-                    accentColor = AccentPurple,
-                    currencySymbol = currencySymbol,
-                    modifier = Modifier.weight(1f)
-                )
+                Spacer(modifier = Modifier.height(18.dp))
 
-                ModernSummaryPill(
-                    title = "Mes",
-                    icon = Icons.Default.CalendarMonth,
-                    earnings = summary.monthEarnings,
-                    hours = summary.monthHours,
-                    accentColor = AccentEmerald,
-                    currencySymbol = currencySymbol,
-                    modifier = Modifier.weight(1f)
-                )
+                // Glassmorphic pills row
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    FintechSummaryPill(
+                        title = "Hoy",
+                        icon = Icons.Default.Today,
+                        earnings = summary.todayEarnings,
+                        hours = summary.todayHours,
+                        accentColor = PrimaryBlue,
+                        currencySymbol = currencySymbol,
+                        modifier = Modifier.weight(1f)
+                    )
+
+                    FintechSummaryPill(
+                        title = "Semana",
+                        icon = Icons.Default.DateRange,
+                        earnings = summary.weekEarnings,
+                        hours = summary.weekHours,
+                        accentColor = AccentPurple,
+                        currencySymbol = currencySymbol,
+                        modifier = Modifier.weight(1f)
+                    )
+
+                    FintechSummaryPill(
+                        title = "Mes",
+                        icon = Icons.Default.CalendarMonth,
+                        earnings = summary.monthEarnings,
+                        hours = summary.monthHours,
+                        accentColor = AccentEmerald,
+                        currencySymbol = currencySymbol,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
             }
         }
     }
 }
 
 @Composable
-private fun ModernSummaryPill(
+private fun FintechSummaryPill(
     title: String,
     icon: ImageVector,
     earnings: Double,
@@ -134,18 +196,17 @@ private fun ModernSummaryPill(
     val h = totalMinutes / 60
     val m = totalMinutes % 60
     val durationText = "${h}h ${m}m"
-    val formattedAmount = String.format(Locale.getDefault(), "%,.0f", earnings)
 
     Box(
         modifier = modifier
-            .clip(RoundedCornerShape(18.dp))
-            .background(accentColor.copy(alpha = 0.08f))
+            .clip(RoundedCornerShape(16.dp))
+            .background(Color.White.copy(alpha = 0.07f))
             .border(
                 width = 1.dp,
-                color = accentColor.copy(alpha = 0.2f),
-                shape = RoundedCornerShape(18.dp)
+                color = Color.White.copy(alpha = 0.12f),
+                shape = RoundedCornerShape(16.dp)
             )
-            .padding(vertical = 14.dp, horizontal = 10.dp)
+            .padding(vertical = 12.dp, horizontal = 8.dp)
     ) {
         Column(
             modifier = Modifier.fillMaxWidth(),
@@ -153,16 +214,16 @@ private fun ModernSummaryPill(
         ) {
             Box(
                 modifier = Modifier
-                    .size(28.dp)
+                    .size(24.dp)
                     .clip(CircleShape)
-                    .background(accentColor.copy(alpha = 0.15f)),
+                    .background(accentColor.copy(alpha = 0.25f)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = icon,
-                    contentDescription = title,
+                    contentDescription = null,
                     tint = accentColor,
-                    modifier = Modifier.size(15.dp)
+                    modifier = Modifier.size(14.dp)
                 )
             }
 
@@ -172,26 +233,27 @@ private fun ModernSummaryPill(
                 text = title,
                 style = MaterialTheme.typography.labelSmall,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = Color(0xFF94A3B8)
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(2.dp))
 
-            Text(
-                text = "$currencySymbol$formattedAmount",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Black,
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 1
+            AnimatedMoneyText(
+                amount = earnings,
+                currencySymbol = currencySymbol,
+                style = MaterialTheme.typography.labelLarge,
+                color = Color.White,
+                fontWeight = FontWeight.ExtraBold,
+                decimals = 0
             )
 
-            Spacer(modifier = Modifier.height(3.dp))
+            Spacer(modifier = Modifier.height(2.dp))
 
             Text(
                 text = durationText,
                 style = MaterialTheme.typography.labelSmall,
-                fontWeight = FontWeight.SemiBold,
-                color = accentColor
+                color = Color(0xFF94A3B8),
+                fontSize = 11.sp
             )
         }
     }

@@ -250,7 +250,7 @@ class WorkHoursViewModel(application: Application) : AndroidViewModel(applicatio
             }
         }
         sb.appendLine("----------------------------------")
-        sb.appendLine("Generado con Control de Horas")
+        sb.appendLine("Generado con Mi Turno")
         return sb.toString()
     }
 

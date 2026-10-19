@@ -27,6 +27,7 @@ import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.TrendingUp
+import androidx.compose.material.icons.filled.Weekend
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -54,7 +55,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import com.example.workhourstracker.data.WorkShift
+import com.example.workhourstracker.ui.components.AnimatedMoneyText
 import com.example.workhourstracker.ui.components.EditShiftDialog
 import com.example.workhourstracker.ui.components.ManualShiftDialog
 import com.example.workhourstracker.ui.theme.AccentCoral
@@ -79,6 +83,7 @@ fun HistoryScreen(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val haptic = LocalHapticFeedback.current
     val shifts by viewModel.allShifts.collectAsState()
     val currencySymbol by viewModel.currencySymbol.collectAsState()
     val hourlyRate by viewModel.hourlyRate.collectAsState()
@@ -320,32 +325,50 @@ fun HistoryScreen(
                 ) {
                     FilterChip(
                         selected = selectedFilter == HistoryFilter.ALL,
-                        onClick = { selectedFilter = HistoryFilter.ALL },
+                        onClick = {
+                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                            selectedFilter = HistoryFilter.ALL
+                        },
                         label = { Text("Todos") }
                     )
                     FilterChip(
                         selected = selectedFilter == HistoryFilter.THIS_WEEK,
-                        onClick = { selectedFilter = HistoryFilter.THIS_WEEK },
+                        onClick = {
+                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                            selectedFilter = HistoryFilter.THIS_WEEK
+                        },
                         label = { Text("Esta Semana") }
                     )
                     FilterChip(
                         selected = selectedFilter == HistoryFilter.THIS_MONTH,
-                        onClick = { selectedFilter = HistoryFilter.THIS_MONTH },
+                        onClick = {
+                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                            selectedFilter = HistoryFilter.THIS_MONTH
+                        },
                         label = { Text("Este Mes") }
                     )
                     FilterChip(
                         selected = selectedFilter == HistoryFilter.FIRST_FORTNIGHT,
-                        onClick = { selectedFilter = HistoryFilter.FIRST_FORTNIGHT },
+                        onClick = {
+                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                            selectedFilter = HistoryFilter.FIRST_FORTNIGHT
+                        },
                         label = { Text("1ª Quincena (1-15)") }
                     )
                     FilterChip(
                         selected = selectedFilter == HistoryFilter.SECOND_FORTNIGHT,
-                        onClick = { selectedFilter = HistoryFilter.SECOND_FORTNIGHT },
+                        onClick = {
+                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                            selectedFilter = HistoryFilter.SECOND_FORTNIGHT
+                        },
                         label = { Text("2ª Quincena (16-fin)") }
                     )
                     FilterChip(
                         selected = selectedFilter == HistoryFilter.PREVIOUS_MONTH,
-                        onClick = { selectedFilter = HistoryFilter.PREVIOUS_MONTH },
+                        onClick = {
+                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                            selectedFilter = HistoryFilter.PREVIOUS_MONTH
+                        },
                         label = { Text("Mes Pasado") }
                     )
                 }
@@ -356,7 +379,6 @@ fun HistoryScreen(
                 val totalMinutes = (totalHours * 60).toInt()
                 val h = totalMinutes / 60
                 val m = totalMinutes % 60
-                val formattedTotalEarnings = String.format(Locale.getDefault(), "%,.2f", totalEarnings)
 
                 Card(
                     modifier = Modifier
@@ -402,11 +424,13 @@ fun HistoryScreen(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = "$currencySymbol$formattedTotalEarnings",
+                            AnimatedMoneyText(
+                                amount = totalEarnings,
+                                currencySymbol = currencySymbol,
                                 style = MaterialTheme.typography.titleLarge,
                                 fontWeight = FontWeight.Black,
-                                color = AccentEmerald
+                                color = AccentEmerald,
+                                decimals = 2
                             )
                         }
                     }
@@ -416,17 +440,68 @@ fun HistoryScreen(
             // List of shifts
             if (filteredShifts.isEmpty()) {
                 item {
-                    Box(
+                    Card(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(top = 40.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "No hay jornadas registradas en este período.",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            .padding(top = 28.dp)
+                            .border(
+                                width = 1.dp,
+                                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.15f),
+                                shape = RoundedCornerShape(24.dp)
+                            ),
+                        shape = RoundedCornerShape(24.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)
                         )
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(32.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(64.dp)
+                                    .clip(CircleShape)
+                                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Weekend,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(32.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                text = "Todo tranquilo por acá",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Text(
+                                text = "No hay jornadas registradas en este período. ¡Disfrutá tu descanso o tocá abajo para registrar un turno!",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                            )
+                            Spacer(modifier = Modifier.height(18.dp))
+                            OutlinedButton(
+                                onClick = { showManualShiftDialog = true },
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Add,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text("Añadir turno manual", fontWeight = FontWeight.Bold)
+                            }
+                        }
                     }
                 }
             } else {

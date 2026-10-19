@@ -369,12 +369,13 @@ fun DirectShiftCard(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             Spacer(modifier = Modifier.height(4.dp))
-                            val formattedEarnings = String.format(Locale.getDefault(), "%,.2f", estimatedEarnings)
-                            Text(
-                                text = "$currencySymbol$formattedEarnings",
+                            AnimatedMoneyText(
+                                amount = estimatedEarnings,
+                                currencySymbol = currencySymbol,
                                 style = MaterialTheme.typography.headlineMedium,
                                 fontWeight = FontWeight.Black,
-                                color = AccentEmerald
+                                color = AccentEmerald,
+                                decimals = 2
                             )
                         }
                     }

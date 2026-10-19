@@ -1,6 +1,6 @@
 {
   "version": "1.2.2",
   "versionCode": 4,
-  "downloadUrl": "https://github.com/NahuPani/work_hours_tracker/releases/latest/download/app-release.apk",
+  "downloadUrl": "https://github.com/NahuPani/work_hours_tracker/raw/main/release/work_hours_tracker_latest.apk",
   "releaseNotes": "Versión 1.2.2 Release: APK ultra optimizado (1.1 MB), firmado digitalmente y compilado con R8 para máxima fluidez a 60/120 FPS."
 }

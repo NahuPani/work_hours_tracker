@@ -28,6 +28,15 @@ data class EarningsSummary(
     val totalEarnings: Double = 0.0
 )
 
+data class DayActivity(
+    val dayOfWeek: String,
+    val dayOfMonth: Int,
+    val isToday: Boolean,
+    val durationHours: Double,
+    val earnings: Double,
+    val overtimeHours: Double
+)
+
 class WorkHoursViewModel(application: Application) : AndroidViewModel(application) {
 
     private val db = AppDatabase.getDatabase(application)
@@ -56,6 +65,11 @@ class WorkHoursViewModel(application: Application) : AndroidViewModel(applicatio
     val earningsSummary: StateFlow<EarningsSummary> = allShifts.map { shifts ->
         calculateEarningsSummary(shifts)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), EarningsSummary())
+
+    // Weekly activity for 7 days (Monday to Sunday)
+    val weeklyActivity: StateFlow<List<DayActivity>> = allShifts.map { shifts ->
+        calculateWeeklyActivity(shifts)
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     fun addShift(
         startTimeMillis: Long,
@@ -304,5 +318,51 @@ class WorkHoursViewModel(application: Application) : AndroidViewModel(applicatio
             totalHours = totalH,
             totalEarnings = totalE
         )
+    }
+
+    private fun calculateWeeklyActivity(shifts: List<WorkShift>): List<DayActivity> {
+        val now = Calendar.getInstance()
+        val todayYear = now.get(Calendar.YEAR)
+        val todayDayOfYear = now.get(Calendar.DAY_OF_YEAR)
+
+        val cal = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+            // Go to Monday of current week
+            var dayOfWeek = get(Calendar.DAY_OF_WEEK) // Sunday=1, Monday=2, ...
+            val diff = if (dayOfWeek == Calendar.SUNDAY) -6 else Calendar.MONDAY - dayOfWeek
+            add(Calendar.DAY_OF_MONTH, diff)
+        }
+
+        val dayNames = listOf("Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom")
+        val list = mutableListOf<DayActivity>()
+
+        for (i in 0 until 7) {
+            val startOfDay = cal.timeInMillis
+            val dayOfMonth = cal.get(Calendar.DAY_OF_MONTH)
+            val isToday = (cal.get(Calendar.YEAR) == todayYear && cal.get(Calendar.DAY_OF_YEAR) == todayDayOfYear)
+
+            cal.add(Calendar.DAY_OF_MONTH, 1)
+            val endOfDay = cal.timeInMillis
+
+            val dayShifts = shifts.filter { it.startTimeMillis in startOfDay until endOfDay }
+            val hours = dayShifts.sumOf { it.durationHours }
+            val earnings = dayShifts.sumOf { it.totalEarnings }
+            val overtime = dayShifts.sumOf { it.overtimeHours }
+
+            list.add(
+                DayActivity(
+                    dayOfWeek = dayNames[i],
+                    dayOfMonth = dayOfMonth,
+                    isToday = isToday,
+                    durationHours = hours,
+                    earnings = earnings,
+                    overtimeHours = overtime
+                )
+            )
+        }
+        return list
     }
 }

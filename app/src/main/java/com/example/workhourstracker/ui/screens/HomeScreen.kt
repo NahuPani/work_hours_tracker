@@ -43,6 +43,7 @@ import com.example.workhourstracker.data.WorkShift
 import com.example.workhourstracker.ui.components.DirectShiftCard
 import com.example.workhourstracker.ui.components.EarningsSummaryCard
 import com.example.workhourstracker.ui.components.HourlyRateDialog
+import com.example.workhourstracker.ui.components.WeeklyBarChartCard
 import com.example.workhourstracker.ui.theme.AccentEmerald
 import com.example.workhourstracker.ui.viewmodel.WorkHoursViewModel
 import java.text.SimpleDateFormat
@@ -62,6 +63,7 @@ fun HomeScreen(
     val enableOvertime by viewModel.enableOvertime.collectAsState()
     val summary by viewModel.earningsSummary.collectAsState()
     val shifts by viewModel.allShifts.collectAsState()
+    val weeklyActivity by viewModel.weeklyActivity.collectAsState()
 
     var showRateDialog by remember { mutableStateOf(false) }
 
@@ -168,6 +170,14 @@ fun HomeScreen(
         item {
             EarningsSummaryCard(
                 summary = summary,
+                currencySymbol = currencySymbol
+            )
+        }
+
+        // Weekly Bar Chart
+        item {
+            WeeklyBarChartCard(
+                weeklyActivity = weeklyActivity,
                 currencySymbol = currencySymbol
             )
         }

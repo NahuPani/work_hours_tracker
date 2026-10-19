@@ -4,12 +4,15 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.workhourstracker.data.AppDatabase
+import com.example.workhourstracker.data.UpdateChecker
+import com.example.workhourstracker.data.UpdateInfo
 import com.example.workhourstracker.data.UserPreferences
 import com.example.workhourstracker.data.WorkShift
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -61,15 +64,70 @@ class WorkHoursViewModel(application: Application) : AndroidViewModel(applicatio
     private val _enableOvertime = MutableStateFlow(prefs.enableOvertime)
     val enableOvertime: StateFlow<Boolean> = _enableOvertime.asStateFlow()
 
-    // Calculated summary of all recorded shifts
-    val earningsSummary: StateFlow<EarningsSummary> = allShifts.map { shifts ->
-        calculateEarningsSummary(shifts)
+    private val _startDayOfWeek = MutableStateFlow(prefs.startDayOfWeek)
+    val startDayOfWeek: StateFlow<Int> = _startDayOfWeek.asStateFlow()
+
+    // Draft shift state (so user doesn't lose entered inputs when switching tabs)
+    private val _draftDateMillis = MutableStateFlow(System.currentTimeMillis())
+    val draftDateMillis: StateFlow<Long> = _draftDateMillis.asStateFlow()
+
+    private val _draftStartHour = MutableStateFlow(prefs.draftStartHour)
+    val draftStartHour: StateFlow<Int> = _draftStartHour.asStateFlow()
+
+    private val _draftStartMinute = MutableStateFlow(prefs.draftStartMinute)
+    val draftStartMinute: StateFlow<Int> = _draftStartMinute.asStateFlow()
+
+    private val _draftEndHour = MutableStateFlow(prefs.draftEndHour)
+    val draftEndHour: StateFlow<Int> = _draftEndHour.asStateFlow()
+
+    private val _draftEndMinute = MutableStateFlow(prefs.draftEndMinute)
+    val draftEndMinute: StateFlow<Int> = _draftEndMinute.asStateFlow()
+
+    private val _draftNote = MutableStateFlow("")
+    val draftNote: StateFlow<String> = _draftNote.asStateFlow()
+
+    // Calculated summary of all recorded shifts (respecting startDayOfWeek cycle)
+    val earningsSummary: StateFlow<EarningsSummary> = combine(allShifts, _startDayOfWeek) { shifts, startDay ->
+        calculateEarningsSummary(shifts, startDay)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), EarningsSummary())
 
-    // Weekly activity for 7 days (Monday to Sunday)
-    val weeklyActivity: StateFlow<List<DayActivity>> = allShifts.map { shifts ->
-        calculateWeeklyActivity(shifts)
+    // Weekly activity for 7 days (starting from startDayOfWeek, e.g. Miércoles a Martes)
+    val weeklyActivity: StateFlow<List<DayActivity>> = combine(allShifts, _startDayOfWeek) { shifts, startDay ->
+        calculateWeeklyActivity(shifts, startDay)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    // Update checker
+    private val _updateInfo = MutableStateFlow<UpdateInfo?>(null)
+    val updateInfo: StateFlow<UpdateInfo?> = _updateInfo.asStateFlow()
+
+    private val _isCheckingUpdate = MutableStateFlow(false)
+    val isCheckingUpdate: StateFlow<Boolean> = _isCheckingUpdate.asStateFlow()
+
+    init {
+        // Automatically check for updates on app startup silently
+        checkForUpdates()
+    }
+
+    fun checkForUpdates(onComplete: ((UpdateInfo?) -> Unit)? = null) {
+        viewModelScope.launch {
+            _isCheckingUpdate.value = true
+            val result = UpdateChecker.checkForUpdates(getApplication())
+            _isCheckingUpdate.value = false
+            if (result.isSuccess) {
+                val info = result.getOrNull()
+                if (info != null && info.isUpdateAvailable) {
+                    _updateInfo.value = info
+                }
+                onComplete?.invoke(info)
+            } else {
+                onComplete?.invoke(null)
+            }
+        }
+    }
+
+    fun dismissUpdate() {
+        _updateInfo.value = null
+    }
 
     fun addShift(
         startTimeMillis: Long,
@@ -121,6 +179,38 @@ class WorkHoursViewModel(application: Application) : AndroidViewModel(applicatio
         _standardDailyHours.value = standardHours
         _overtimeMultiplier.value = multiplier
         _enableOvertime.value = enabled
+    }
+
+    fun updateStartDayOfWeek(day: Int) {
+        prefs.startDayOfWeek = day
+        _startDayOfWeek.value = day
+    }
+
+    fun updateDraftStartTime(hour: Int, minute: Int) {
+        _draftStartHour.value = hour
+        _draftStartMinute.value = minute
+        prefs.draftStartHour = hour
+        prefs.draftStartMinute = minute
+    }
+
+    fun updateDraftEndTime(hour: Int, minute: Int) {
+        _draftEndHour.value = hour
+        _draftEndMinute.value = minute
+        prefs.draftEndHour = hour
+        prefs.draftEndMinute = minute
+    }
+
+    fun updateDraftDate(millis: Long) {
+        _draftDateMillis.value = millis
+    }
+
+    fun updateDraftNote(note: String) {
+        _draftNote.value = note
+    }
+
+    fun resetDraftAfterSave() {
+        _draftNote.value = ""
+        _draftDateMillis.value = System.currentTimeMillis()
     }
 
     // Export report for WhatsApp / clipboard sharing
@@ -246,7 +336,7 @@ class WorkHoursViewModel(application: Application) : AndroidViewModel(applicatio
         }
     }
 
-    private fun calculateEarningsSummary(shifts: List<WorkShift>): EarningsSummary {
+    private fun calculateEarningsSummary(shifts: List<WorkShift>, startDay: Int): EarningsSummary {
         val now = Calendar.getInstance()
 
         val todayCalendar = Calendar.getInstance().apply {
@@ -262,10 +352,9 @@ class WorkHoursViewModel(application: Application) : AndroidViewModel(applicatio
             set(Calendar.MINUTE, 0)
             set(Calendar.SECOND, 0)
             set(Calendar.MILLISECOND, 0)
-            set(Calendar.DAY_OF_WEEK, Calendar.MONDAY)
-            if (firstDayOfWeek == Calendar.SUNDAY && get(Calendar.DAY_OF_WEEK) > now.get(Calendar.DAY_OF_WEEK)) {
-                add(Calendar.WEEK_OF_YEAR, -1)
-            }
+            val currentDay = get(Calendar.DAY_OF_WEEK)
+            val diff = (currentDay - startDay + 7) % 7
+            add(Calendar.DAY_OF_MONTH, -diff)
         }
         val startOfWeek = weekCalendar.timeInMillis
 
@@ -320,7 +409,7 @@ class WorkHoursViewModel(application: Application) : AndroidViewModel(applicatio
         )
     }
 
-    private fun calculateWeeklyActivity(shifts: List<WorkShift>): List<DayActivity> {
+    private fun calculateWeeklyActivity(shifts: List<WorkShift>, startDay: Int): List<DayActivity> {
         val now = Calendar.getInstance()
         val todayYear = now.get(Calendar.YEAR)
         val todayDayOfYear = now.get(Calendar.DAY_OF_YEAR)
@@ -330,19 +419,29 @@ class WorkHoursViewModel(application: Application) : AndroidViewModel(applicatio
             set(Calendar.MINUTE, 0)
             set(Calendar.SECOND, 0)
             set(Calendar.MILLISECOND, 0)
-            // Go to Monday of current week
-            var dayOfWeek = get(Calendar.DAY_OF_WEEK) // Sunday=1, Monday=2, ...
-            val diff = if (dayOfWeek == Calendar.SUNDAY) -6 else Calendar.MONDAY - dayOfWeek
-            add(Calendar.DAY_OF_MONTH, diff)
+            val currentDay = get(Calendar.DAY_OF_WEEK)
+            val diff = (currentDay - startDay + 7) % 7
+            add(Calendar.DAY_OF_MONTH, -diff)
         }
 
-        val dayNames = listOf("Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom")
         val list = mutableListOf<DayActivity>()
 
         for (i in 0 until 7) {
             val startOfDay = cal.timeInMillis
             val dayOfMonth = cal.get(Calendar.DAY_OF_MONTH)
+            val dayOfWeekVal = cal.get(Calendar.DAY_OF_WEEK)
             val isToday = (cal.get(Calendar.YEAR) == todayYear && cal.get(Calendar.DAY_OF_YEAR) == todayDayOfYear)
+
+            val dayLabel = when (dayOfWeekVal) {
+                Calendar.MONDAY -> "Lun"
+                Calendar.TUESDAY -> "Mar"
+                Calendar.WEDNESDAY -> "Mié"
+                Calendar.THURSDAY -> "Jue"
+                Calendar.FRIDAY -> "Vie"
+                Calendar.SATURDAY -> "Sáb"
+                Calendar.SUNDAY -> "Dom"
+                else -> ""
+            }
 
             cal.add(Calendar.DAY_OF_MONTH, 1)
             val endOfDay = cal.timeInMillis
@@ -354,7 +453,7 @@ class WorkHoursViewModel(application: Application) : AndroidViewModel(applicatio
 
             list.add(
                 DayActivity(
-                    dayOfWeek = dayNames[i],
+                    dayOfWeek = dayLabel,
                     dayOfMonth = dayOfMonth,
                     isToday = isToday,
                     durationHours = hours,

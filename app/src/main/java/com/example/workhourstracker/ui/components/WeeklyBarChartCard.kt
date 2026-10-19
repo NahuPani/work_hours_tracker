@@ -25,6 +25,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -46,9 +47,11 @@ fun WeeklyBarChartCard(
 ) {
     if (weeklyActivity.isEmpty()) return
 
-    val totalWeekHours = weeklyActivity.sumOf { it.durationHours }
-    val totalWeekEarnings = weeklyActivity.sumOf { it.earnings }
-    val maxDayHours = weeklyActivity.maxOfOrNull { it.durationHours }?.coerceAtLeast(8.0) ?: 8.0
+    val totalWeekHours = remember(weeklyActivity) { weeklyActivity.sumOf { it.durationHours } }
+    val totalWeekEarnings = remember(weeklyActivity) { weeklyActivity.sumOf { it.earnings } }
+    val maxDayHours = remember(weeklyActivity) {
+        weeklyActivity.maxOfOrNull { it.durationHours }?.coerceAtLeast(8.0) ?: 8.0
+    }
 
     Card(
         modifier = modifier

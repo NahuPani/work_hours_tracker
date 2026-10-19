@@ -43,6 +43,7 @@ import com.example.workhourstracker.data.WorkShift
 import com.example.workhourstracker.ui.components.DirectShiftCard
 import com.example.workhourstracker.ui.components.EarningsSummaryCard
 import com.example.workhourstracker.ui.components.HourlyRateDialog
+import com.example.workhourstracker.ui.components.UpdateAvailableDialog
 import com.example.workhourstracker.ui.components.WeeklyBarChartCard
 import com.example.workhourstracker.ui.theme.AccentEmerald
 import com.example.workhourstracker.ui.viewmodel.WorkHoursViewModel
@@ -64,8 +65,26 @@ fun HomeScreen(
     val summary by viewModel.earningsSummary.collectAsState()
     val shifts by viewModel.allShifts.collectAsState()
     val weeklyActivity by viewModel.weeklyActivity.collectAsState()
+    val updateInfo by viewModel.updateInfo.collectAsState()
+
+    val draftStartHour by viewModel.draftStartHour.collectAsState()
+    val draftStartMinute by viewModel.draftStartMinute.collectAsState()
+    val draftEndHour by viewModel.draftEndHour.collectAsState()
+    val draftEndMinute by viewModel.draftEndMinute.collectAsState()
+    val draftDateMillis by viewModel.draftDateMillis.collectAsState()
+    val draftNote by viewModel.draftNote.collectAsState()
 
     var showRateDialog by remember { mutableStateOf(false) }
+
+    // Dialog when new version is found
+    updateInfo?.let { info ->
+        if (info.isUpdateAvailable) {
+            UpdateAvailableDialog(
+                updateInfo = info,
+                onDismiss = { viewModel.dismissUpdate() }
+            )
+        }
+    }
 
     if (showRateDialog) {
         HourlyRateDialog(
@@ -94,9 +113,11 @@ fun HomeScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column {
-                    val dateFormatted = SimpleDateFormat("EEEE, d 'de' MMMM", Locale("es", "ES"))
-                        .format(Date())
-                        .replaceFirstChar { it.uppercase() }
+                    val dateFormatted = remember {
+                        SimpleDateFormat("EEEE, d 'de' MMMM", Locale("es", "ES"))
+                            .format(Date())
+                            .replaceFirstChar { it.uppercase() }
+                    }
 
                     Text(
                         text = "Mi Jornada",
@@ -153,6 +174,16 @@ fun HomeScreen(
                 standardDailyHours = standardDailyHours,
                 overtimeMultiplier = overtimeMultiplier,
                 enableOvertime = enableOvertime,
+                startHour = draftStartHour,
+                startMinute = draftStartMinute,
+                endHour = draftEndHour,
+                endMinute = draftEndMinute,
+                dateMillis = draftDateMillis,
+                noteText = draftNote,
+                onStartTimeChange = { h, m -> viewModel.updateDraftStartTime(h, m) },
+                onEndTimeChange = { h, m -> viewModel.updateDraftEndTime(h, m) },
+                onDateChange = { millis -> viewModel.updateDraftDate(millis) },
+                onNoteChange = { note -> viewModel.updateDraftNote(note) },
                 onSaveShift = { startTime, endTime, rate, stdHours, extraMultiplier, note ->
                     viewModel.addShift(
                         startTimeMillis = startTime,
@@ -162,6 +193,7 @@ fun HomeScreen(
                         overtimeMultiplier = extraMultiplier,
                         note = note
                     )
+                    viewModel.resetDraftAfterSave()
                 }
             )
         }

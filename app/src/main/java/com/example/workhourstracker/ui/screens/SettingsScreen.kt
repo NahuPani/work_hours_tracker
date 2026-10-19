@@ -18,16 +18,22 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material.icons.filled.Backup
+import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Restore
 import androidx.compose.material.icons.filled.Security
+import androidx.compose.material.icons.filled.SystemUpdate
 import androidx.compose.material.icons.filled.TrendingUp
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import java.util.Calendar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -45,6 +51,7 @@ import androidx.compose.ui.unit.dp
 import com.example.workhourstracker.ui.components.HourlyRateDialog
 import com.example.workhourstracker.ui.components.OvertimeDialog
 import com.example.workhourstracker.ui.components.RestoreDialog
+import com.example.workhourstracker.ui.components.UpdateAvailableDialog
 import com.example.workhourstracker.ui.theme.AccentEmerald
 import com.example.workhourstracker.ui.viewmodel.WorkHoursViewModel
 import kotlinx.coroutines.launch
@@ -67,9 +74,93 @@ fun SettingsScreen(
     val summary by viewModel.earningsSummary.collectAsState()
     val shifts by viewModel.allShifts.collectAsState()
 
+    val updateInfo by viewModel.updateInfo.collectAsState()
+    val isCheckingUpdate by viewModel.isCheckingUpdate.collectAsState()
+
+    val appVersion = remember {
+        try {
+            context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "1.0.0"
+        } catch (e: Exception) {
+            "1.0.0"
+        }
+    }
+
+    val startDayOfWeek by viewModel.startDayOfWeek.collectAsState()
+
     var showRateDialog by remember { mutableStateOf(false) }
     var showOvertimeDialog by remember { mutableStateOf(false) }
     var showRestoreDialog by remember { mutableStateOf(false) }
+    var showUpdateDialog by remember { mutableStateOf(false) }
+    var showDayOfWeekDialog by remember { mutableStateOf(false) }
+
+    if (showDayOfWeekDialog) {
+        val days = listOf(
+            Calendar.WEDNESDAY to "Miércoles (Mié a Mar)",
+            Calendar.MONDAY to "Lunes (Lun a Dom)",
+            Calendar.SUNDAY to "Domingo (Dom a Sáb)",
+            Calendar.THURSDAY to "Jueves (Jue a Mié)",
+            Calendar.FRIDAY to "Viernes (Vie a Jue)",
+            Calendar.SATURDAY to "Sábado (Sáb a Vie)",
+            Calendar.TUESDAY to "Martes (Mar a Lun)"
+        )
+        AlertDialog(
+            onDismissRequest = { showDayOfWeekDialog = false },
+            title = { Text("Inicio de Semana Laboral") },
+            text = {
+                Column {
+                    Text(
+                        text = "Elige qué día comienza tu ciclo de trabajo/pago para calcular totales y gráficos:",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(14.dp))
+                    days.forEach { (calDay, label) ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .clickable {
+                                    viewModel.updateStartDayOfWeek(calDay)
+                                    showDayOfWeekDialog = false
+                                }
+                                .padding(vertical = 10.dp, horizontal = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            RadioButton(
+                                selected = startDayOfWeek == calDay,
+                                onClick = {
+                                    viewModel.updateStartDayOfWeek(calDay)
+                                    showDayOfWeekDialog = false
+                                }
+                            )
+                            Spacer(modifier = Modifier.padding(start = 8.dp))
+                            Text(
+                                text = label,
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = if (startDayOfWeek == calDay) FontWeight.Bold else FontWeight.Normal,
+                                color = if (startDayOfWeek == calDay) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showDayOfWeekDialog = false }) {
+                    Text("Cerrar")
+                }
+            }
+        )
+    }
+
+    if (showUpdateDialog && updateInfo != null && updateInfo!!.isUpdateAvailable) {
+        UpdateAvailableDialog(
+            updateInfo = updateInfo!!,
+            onDismiss = {
+                showUpdateDialog = false
+                viewModel.dismissUpdate()
+            }
+        )
+    }
 
     if (showRateDialog) {
         HourlyRateDialog(
@@ -163,6 +254,24 @@ fun SettingsScreen(
                             "Desactivadas"
                         },
                         onClick = { showOvertimeDialog = true }
+                    )
+
+                    val dayNameLabel = when (startDayOfWeek) {
+                        Calendar.WEDNESDAY -> "Miércoles (Mié a Mar)"
+                        Calendar.MONDAY -> "Lunes (Lun a Dom)"
+                        Calendar.SUNDAY -> "Domingo (Dom a Sáb)"
+                        Calendar.THURSDAY -> "Jueves (Jue a Mié)"
+                        Calendar.FRIDAY -> "Viernes (Vie a Jue)"
+                        Calendar.SATURDAY -> "Sábado (Sáb a Vie)"
+                        Calendar.TUESDAY -> "Martes (Mar a Lun)"
+                        else -> "Miércoles (Mié a Mar)"
+                    }
+
+                    SettingsItem(
+                        icon = Icons.Default.CalendarToday,
+                        title = "Inicio de Semana Laboral",
+                        subtitle = "Ciclo semanal: $dayNameLabel",
+                        onClick = { showDayOfWeekDialog = true }
                     )
                 }
             }
@@ -301,6 +410,42 @@ fun SettingsScreen(
                         }
                     }
                 }
+            }
+        }
+
+        // Section: Actualizaciones
+        item {
+            Text(
+                text = "Actualizaciones",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
+            )
+        }
+
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+            ) {
+                SettingsItem(
+                    icon = Icons.Default.SystemUpdate,
+                    title = "Buscar Actualizaciones",
+                    subtitle = if (isCheckingUpdate) "Consultando GitHub..." else "Versión instalada: v$appVersion • Tocar para comprobar",
+                    onClick = {
+                        viewModel.checkForUpdates { info ->
+                            if (info == null) {
+                                Toast.makeText(context, "No se pudo conectar con GitHub. Verificá tu conexión.", Toast.LENGTH_SHORT).show()
+                            } else if (info.isUpdateAvailable) {
+                                showUpdateDialog = true
+                            } else {
+                                Toast.makeText(context, "✓ ¡Tu aplicación ya está actualizada a la última versión (v${info.currentVersion})!", Toast.LENGTH_LONG).show()
+                            }
+                        }
+                    }
+                )
             }
         }
 

@@ -1,0 +1,6 @@
+{
+  "version": "1.0.0",
+  "versionCode": 1,
+  "downloadUrl": "https://github.com/NahuPani/work_hours_tracker/releases/latest",
+  "releaseNotes": "Versión 1.0.0 estable: interfaz moderna fintech, carga directa de horas de entrada y salida, cálculo automático de horas extras, gráficos semanales y filtros por quincena."
+}

@@ -71,6 +71,16 @@ fun DirectShiftCard(
     standardDailyHours: Double = 8.0,
     overtimeMultiplier: Double = 1.5,
     enableOvertime: Boolean = true,
+    startHour: Int = 8,
+    startMinute: Int = 0,
+    endHour: Int = 16,
+    endMinute: Int = 0,
+    dateMillis: Long = System.currentTimeMillis(),
+    noteText: String = "",
+    onStartTimeChange: (Int, Int) -> Unit = { _, _ -> },
+    onEndTimeChange: (Int, Int) -> Unit = { _, _ -> },
+    onDateChange: (Long) -> Unit = {},
+    onNoteChange: (String) -> Unit = {},
     onSaveShift: (
         startTimeMillis: Long,
         endTimeMillis: Long,
@@ -85,18 +95,11 @@ fun DirectShiftCard(
     val haptic = LocalHapticFeedback.current
     val is24Hour = DateFormat.is24HourFormat(context)
 
-    // Current date state
-    var selectedCalendar by remember {
-        mutableStateOf(Calendar.getInstance())
+    // Current date state from draft
+    val selectedCalendar = remember(dateMillis) {
+        Calendar.getInstance().apply { timeInMillis = dateMillis }
     }
 
-    // Default start at 08:00 and end at 16:00
-    var startHour by remember { mutableIntStateOf(8) }
-    var startMinute by remember { mutableIntStateOf(0) }
-    var endHour by remember { mutableIntStateOf(16) }
-    var endMinute by remember { mutableIntStateOf(0) }
-
-    var noteText by remember { mutableStateOf("") }
     var successMessage by remember { mutableStateOf<String?>(null) }
 
     // Date Picker Dialog
@@ -109,7 +112,8 @@ fun DirectShiftCard(
                     set(Calendar.MONTH, month)
                     set(Calendar.DAY_OF_MONTH, dayOfMonth)
                 }
-                selectedCalendar = newCal
+                onDateChange(newCal.timeInMillis)
+                successMessage = null
             },
             selectedCalendar.get(Calendar.YEAR),
             selectedCalendar.get(Calendar.MONTH),
@@ -122,8 +126,7 @@ fun DirectShiftCard(
         TimePickerDialog(
             context,
             { _, hourOfDay, minute ->
-                startHour = hourOfDay
-                startMinute = minute
+                onStartTimeChange(hourOfDay, minute)
                 successMessage = null
             },
             startHour,
@@ -136,8 +139,7 @@ fun DirectShiftCard(
         TimePickerDialog(
             context,
             { _, hourOfDay, minute ->
-                endHour = hourOfDay
-                endMinute = minute
+                onEndTimeChange(hourOfDay, minute)
                 successMessage = null
             },
             endHour,
@@ -146,35 +148,47 @@ fun DirectShiftCard(
         )
     }
 
-    // Calculate Milliseconds and Duration
-    val startCal = (selectedCalendar.clone() as Calendar).apply {
-        set(Calendar.HOUR_OF_DAY, startHour)
-        set(Calendar.MINUTE, startMinute)
-        set(Calendar.SECOND, 0)
-        set(Calendar.MILLISECOND, 0)
-    }
-
-    val endCal = (selectedCalendar.clone() as Calendar).apply {
-        set(Calendar.HOUR_OF_DAY, endHour)
-        set(Calendar.MINUTE, endMinute)
-        set(Calendar.SECOND, 0)
-        set(Calendar.MILLISECOND, 0)
-        if (timeInMillis <= startCal.timeInMillis) {
-            add(Calendar.DAY_OF_MONTH, 1)
+    // Calculate Milliseconds and Duration (Memoized for max 60/120fps smoothness)
+    val startCal = remember(selectedCalendar, startHour, startMinute) {
+        (selectedCalendar.clone() as Calendar).apply {
+            set(Calendar.HOUR_OF_DAY, startHour)
+            set(Calendar.MINUTE, startMinute)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
         }
     }
 
-    val grossDurationMillis = (endCal.timeInMillis - startCal.timeInMillis).coerceAtLeast(0)
-    val durationHours = grossDurationMillis / 3600000.0
-    val totalMinutes = (grossDurationMillis / 60000).toInt()
+    val endCal = remember(selectedCalendar, startCal, endHour, endMinute) {
+        (selectedCalendar.clone() as Calendar).apply {
+            set(Calendar.HOUR_OF_DAY, endHour)
+            set(Calendar.MINUTE, endMinute)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+            if (timeInMillis <= startCal.timeInMillis) {
+                add(Calendar.DAY_OF_MONTH, 1)
+            }
+        }
+    }
+
+    val grossDurationMillis = remember(startCal, endCal) {
+        (endCal.timeInMillis - startCal.timeInMillis).coerceAtLeast(0)
+    }
+    val durationHours = remember(grossDurationMillis) { grossDurationMillis / 3600000.0 }
+    val totalMinutes = remember(grossDurationMillis) { (grossDurationMillis / 60000).toInt() }
     val hours = totalMinutes / 60
     val minutes = totalMinutes % 60
 
     // Overtime calculation
     val isOvertimeActive = enableOvertime && standardDailyHours > 0.0 && overtimeMultiplier > 1.0
-    val regularHours = if (isOvertimeActive) minOf(durationHours, standardDailyHours) else durationHours
-    val overtimeHours = if (isOvertimeActive) maxOf(0.0, durationHours - standardDailyHours) else 0.0
-    val estimatedEarnings = (regularHours * hourlyRate) + (overtimeHours * (hourlyRate * overtimeMultiplier))
+    val regularHours = remember(isOvertimeActive, durationHours, standardDailyHours) {
+        if (isOvertimeActive) minOf(durationHours, standardDailyHours) else durationHours
+    }
+    val overtimeHours = remember(isOvertimeActive, durationHours, standardDailyHours) {
+        if (isOvertimeActive) maxOf(0.0, durationHours - standardDailyHours) else 0.0
+    }
+    val estimatedEarnings = remember(regularHours, overtimeHours, hourlyRate, overtimeMultiplier) {
+        (regularHours * hourlyRate) + (overtimeHours * (hourlyRate * overtimeMultiplier))
+    }
 
     Card(
         modifier = modifier
@@ -268,8 +282,7 @@ fun DirectShiftCard(
                     onClickTime = { startTimePickerDialog.show() },
                     onSetNow = {
                         val now = Calendar.getInstance()
-                        startHour = now.get(Calendar.HOUR_OF_DAY)
-                        startMinute = now.get(Calendar.MINUTE)
+                        onStartTimeChange(now.get(Calendar.HOUR_OF_DAY), now.get(Calendar.MINUTE))
                         successMessage = null
                     }
                 )
@@ -283,8 +296,7 @@ fun DirectShiftCard(
                     onClickTime = { endTimePickerDialog.show() },
                     onSetNow = {
                         val now = Calendar.getInstance()
-                        endHour = now.get(Calendar.HOUR_OF_DAY)
-                        endMinute = now.get(Calendar.MINUTE)
+                        onEndTimeChange(now.get(Calendar.HOUR_OF_DAY), now.get(Calendar.MINUTE))
                         successMessage = null
                     }
                 )
@@ -401,7 +413,7 @@ fun DirectShiftCard(
             OutlinedTextField(
                 value = noteText,
                 onValueChange = {
-                    noteText = it
+                    onNoteChange(it)
                     successMessage = null
                 },
                 label = { Text("Nota o detalle (opcional)") },
@@ -445,8 +457,8 @@ fun DirectShiftCard(
                         if (enableOvertime) overtimeMultiplier else 1.0,
                         noteText
                     )
+                    android.widget.Toast.makeText(context, "✓ ¡Jornada guardada con éxito en el Historial!", android.widget.Toast.LENGTH_SHORT).show()
                     successMessage = "✓ ¡Turno de ${hours}h ${minutes}m guardado con éxito!"
-                    noteText = ""
                 },
                 modifier = Modifier
                     .fillMaxWidth()

@@ -82,6 +82,7 @@ fun HistoryScreen(
     val shifts by viewModel.allShifts.collectAsState()
     val currencySymbol by viewModel.currencySymbol.collectAsState()
     val hourlyRate by viewModel.hourlyRate.collectAsState()
+    val startDayOfWeek by viewModel.startDayOfWeek.collectAsState()
 
     var selectedFilter by remember { mutableStateOf(HistoryFilter.ALL) }
     var showManualShiftDialog by remember { mutableStateOf(false) }
@@ -140,7 +141,7 @@ fun HistoryScreen(
     }
 
     // Filter shifts based on selection
-    val filteredShifts = remember(shifts, selectedFilter) {
+    val filteredShifts = remember(shifts, selectedFilter, startDayOfWeek) {
         val now = Calendar.getInstance()
         when (selectedFilter) {
             HistoryFilter.ALL -> shifts
@@ -150,10 +151,9 @@ fun HistoryScreen(
                     set(Calendar.MINUTE, 0)
                     set(Calendar.SECOND, 0)
                     set(Calendar.MILLISECOND, 0)
-                    set(Calendar.DAY_OF_WEEK, Calendar.MONDAY)
-                    if (firstDayOfWeek == Calendar.SUNDAY && get(Calendar.DAY_OF_WEEK) > now.get(Calendar.DAY_OF_WEEK)) {
-                        add(Calendar.WEEK_OF_YEAR, -1)
-                    }
+                    val currentDay = get(Calendar.DAY_OF_WEEK)
+                    val diff = (currentDay - startDayOfWeek + 7) % 7
+                    add(Calendar.DAY_OF_MONTH, -diff)
                 }
                 val startOfWeek = weekCal.timeInMillis
                 shifts.filter { it.startTimeMillis >= startOfWeek }
@@ -225,15 +225,17 @@ fun HistoryScreen(
         }
     }
 
-    val totalHours = filteredShifts.sumOf { it.durationHours }
-    val totalEarnings = filteredShifts.sumOf { it.totalEarnings }
-    val filterLabel = when (selectedFilter) {
-        HistoryFilter.ALL -> "Historial Completo"
-        HistoryFilter.THIS_WEEK -> "Esta Semana"
-        HistoryFilter.THIS_MONTH -> "Este Mes"
-        HistoryFilter.FIRST_FORTNIGHT -> "1ª Quincena (1-15)"
-        HistoryFilter.SECOND_FORTNIGHT -> "2ª Quincena (16-fin)"
-        HistoryFilter.PREVIOUS_MONTH -> "Mes Anterior"
+    val totalHours = remember(filteredShifts) { filteredShifts.sumOf { it.durationHours } }
+    val totalEarnings = remember(filteredShifts) { filteredShifts.sumOf { it.totalEarnings } }
+    val filterLabel = remember(selectedFilter) {
+        when (selectedFilter) {
+            HistoryFilter.ALL -> "Historial Completo"
+            HistoryFilter.THIS_WEEK -> "Esta Semana"
+            HistoryFilter.THIS_MONTH -> "Este Mes"
+            HistoryFilter.FIRST_FORTNIGHT -> "1ª Quincena (1-15)"
+            HistoryFilter.SECOND_FORTNIGHT -> "2ª Quincena (16-fin)"
+            HistoryFilter.PREVIOUS_MONTH -> "Mes Anterior"
+        }
     }
 
     Scaffold(

@@ -27,33 +27,6 @@ Una aplicación nativa para Android construida con **Kotlin**, **Jetpack Compose
 
 ---
 
-## 📱 Capturas de Pantalla
-
-<div align="center">
-<table>
-  <tr>
-    <td align="center" width="25%">
-      <b>⚡ Registro en Vivo</b><br><br>
-      <img src="docs/screenshots/home.png" width="220" alt="Pantalla de Registro" />
-    </td>
-    <td align="center" width="25%">
-      <b>📋 Historial & PDF</b><br><br>
-      <img src="docs/screenshots/history.png" width="220" alt="Historial de Turnos" />
-    </td>
-    <td align="center" width="25%">
-      <b>📱 Widget de Inicio</b><br><br>
-      <img src="docs/screenshots/widget.png" width="220" alt="Widget Mi Turno" />
-    </td>
-    <td align="center" width="25%">
-      <b>⚙️ Ajustes & Ciclos</b><br><br>
-      <img src="docs/screenshots/settings.png" width="220" alt="Configuración" />
-    </td>
-  </tr>
-</table>
-</div>
-
----
-
 ## 🌟 Características Principales
 
 ### 📱 1. Widget de Pantalla de Inicio (Estilo Fintech Emerald)

@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material.icons.filled.Backup
 import androidx.compose.material.icons.filled.CalendarToday
@@ -24,7 +25,6 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Restore
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.SystemUpdate
-import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -252,7 +252,7 @@ fun SettingsScreen(
                     )
 
                     SettingsItem(
-                        icon = Icons.Default.TrendingUp,
+                        icon = androidx.compose.material.icons.Icons.AutoMirrored.Filled.TrendingUp,
                         title = "Horas Extras",
                         subtitle = if (enableOvertime) {
                             "Jornada de ${standardDailyHours.toInt()}h (+${((overtimeMultiplier - 1.0) * 100).toInt()}% en extras)"

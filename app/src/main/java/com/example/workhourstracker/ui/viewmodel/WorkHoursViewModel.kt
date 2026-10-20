@@ -414,8 +414,6 @@ class WorkHoursViewModel(application: Application) : AndroidViewModel(applicatio
     }
 
     private fun calculateEarningsSummary(shifts: List<WorkShift>, startDay: Int): EarningsSummary {
-        val now = Calendar.getInstance()
-
         val todayCalendar = Calendar.getInstance().apply {
             set(Calendar.HOUR_OF_DAY, 0)
             set(Calendar.MINUTE, 0)

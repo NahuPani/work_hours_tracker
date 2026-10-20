@@ -22,12 +22,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Login
+import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Login
-import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.Schedule
-import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -277,7 +277,7 @@ fun DirectShiftCard(
                     modifier = Modifier.weight(1f),
                     title = "ENTRADA",
                     timeText = String.format(Locale.US, "%02d:%02d", startHour, startMinute),
-                    icon = Icons.Default.Login,
+                    icon = Icons.AutoMirrored.Filled.Login,
                     accentColor = PrimaryBlue,
                     onClickTime = { startTimePickerDialog.show() },
                     onSetNow = {
@@ -291,7 +291,7 @@ fun DirectShiftCard(
                     modifier = Modifier.weight(1f),
                     title = "SALIDA",
                     timeText = String.format(Locale.US, "%02d:%02d", endHour, endMinute),
-                    icon = Icons.Default.Logout,
+                    icon = Icons.AutoMirrored.Filled.Logout,
                     accentColor = AccentEmerald,
                     onClickTime = { endTimePickerDialog.show() },
                     onSetNow = {
@@ -391,7 +391,7 @@ fun DirectShiftCard(
                                 .padding(horizontal = 10.dp, vertical = 5.dp)
                         ) {
                             Icon(
-                                imageVector = Icons.Default.TrendingUp,
+                                imageVector = Icons.AutoMirrored.Filled.TrendingUp,
                                 contentDescription = "Horas extras",
                                 tint = AccentAmber,
                                 modifier = Modifier.size(14.dp)

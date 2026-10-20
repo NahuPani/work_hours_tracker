@@ -23,11 +23,11 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Share
-import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material.icons.filled.Weekend
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
@@ -148,7 +148,6 @@ fun HistoryScreen(
 
     // Filter shifts based on selection
     val filteredShifts = remember(shifts, selectedFilter, startDayOfWeek) {
-        val now = Calendar.getInstance()
         when (selectedFilter) {
             HistoryFilter.ALL -> shifts
             HistoryFilter.THIS_WEEK -> {
@@ -641,7 +640,7 @@ fun ShiftHistoryCard(
                         Spacer(modifier = Modifier.height(4.dp))
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(
-                                imageVector = Icons.Default.TrendingUp,
+                                imageVector = Icons.AutoMirrored.Filled.TrendingUp,
                                 contentDescription = null,
                                 tint = AccentPurple,
                                 modifier = Modifier.size(14.dp)
@@ -716,7 +715,7 @@ private fun shareCsv(context: Context, csvContent: String, filterName: String) {
         }
         val shareIntent = Intent.createChooser(sendIntent, "Exportar CSV")
         context.startActivity(shareIntent)
-    } catch (e: Exception) {
+    } catch (_: Exception) {
         // Fallback to text sharing if FileProvider is not configured
         val sendIntent = Intent().apply {
             action = Intent.ACTION_SEND
@@ -742,7 +741,7 @@ private fun sharePdf(context: Context, file: java.io.File, filterName: String) {
             type = "application/pdf"
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
-        val shareIntent = Intent.createChooser(sendIntent, "Exportar Reporte PDF")
+        val shareIntent = Intent.createChooser(sendIntent, "Exportar Reporte PDF ($filterName)")
         context.startActivity(shareIntent)
     } catch (e: Exception) {
         android.widget.Toast.makeText(context, "No se pudo compartir el PDF: ${e.localizedMessage}", android.widget.Toast.LENGTH_LONG).show()

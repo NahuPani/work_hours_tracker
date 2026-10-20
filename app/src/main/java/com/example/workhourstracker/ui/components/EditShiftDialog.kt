@@ -21,10 +21,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Login
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.FreeBreakfast
-import androidx.compose.material.icons.filled.Login
-import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
@@ -201,7 +201,7 @@ fun EditShiftDialog(
                     TimeBox(
                         title = "ENTRADA",
                         timeText = String.format(Locale.US, "%02d:%02d", startHour, startMinute),
-                        icon = Icons.Default.Login,
+                        icon = Icons.AutoMirrored.Filled.Login,
                         iconTint = MaterialTheme.colorScheme.primary,
                         onClick = { startTimePicker.show() },
                         modifier = Modifier.weight(1f)
@@ -210,7 +210,7 @@ fun EditShiftDialog(
                     TimeBox(
                         title = "SALIDA",
                         timeText = String.format(Locale.US, "%02d:%02d", endHour, endMinute),
-                        icon = Icons.Default.Logout,
+                        icon = Icons.AutoMirrored.Filled.Logout,
                         iconTint = AccentEmerald,
                         onClick = { endTimePicker.show() },
                         modifier = Modifier.weight(1f)

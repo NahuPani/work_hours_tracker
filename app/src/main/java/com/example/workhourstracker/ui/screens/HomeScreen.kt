@@ -18,7 +18,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Card
@@ -235,7 +235,7 @@ fun HomeScreen(
                         Text("Ver todos")
                         Spacer(modifier = Modifier.width(4.dp))
                         Icon(
-                            imageVector = Icons.Default.ArrowForward,
+                            imageVector = androidx.compose.material.icons.Icons.AutoMirrored.Filled.ArrowForward,
                             contentDescription = "Ver historial",
                             modifier = Modifier.size(16.dp)
                         )

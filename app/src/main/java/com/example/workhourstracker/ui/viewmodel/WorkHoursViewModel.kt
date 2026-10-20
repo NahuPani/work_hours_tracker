@@ -16,10 +16,12 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import androidx.compose.runtime.Immutable
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
+@Immutable
 data class EarningsSummary(
     val todayHours: Double = 0.0,
     val todayEarnings: Double = 0.0,
@@ -42,6 +44,7 @@ data class EarningsSummary(
         get() = if (prevWeekHours > 0) ((weekHours - prevWeekHours) / prevWeekHours) * 100.0 else null
 }
 
+@Immutable
 data class DayActivity(
     val dayOfWeek: String,
     val dayOfMonth: Int,

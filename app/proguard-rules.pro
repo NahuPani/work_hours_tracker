@@ -15,3 +15,13 @@
 
 # Compose runtime optimizations
 -dontwarn androidx.compose.**
+
+# R8 Size & String Pool Optimizations
+-renamesourcefileattribute SourceFile
+
+# Strip verbose and debug logging in release builds to reduce DEX size
+-assumenosideeffects class android.util.Log {
+    public static boolean isLoggable(java.lang.String, int);
+    public static int v(...);
+    public static int d(...);
+}

@@ -25,6 +25,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -46,13 +47,15 @@ fun EarningsSummaryCard(
     modifier: Modifier = Modifier
 ) {
     // Luxury Fintech Black & Emerald gradient
-    val cardBrush = Brush.linearGradient(
-        colors = listOf(
-            Color(0xFF0F172A), // Dark Slate
-            Color(0xFF064E3B), // Deep Emerald
-            Color(0xFF022C22)  // Dark Forest
+    val cardBrush = remember {
+        Brush.linearGradient(
+            colors = listOf(
+                Color(0xFF0F172A), // Dark Slate
+                Color(0xFF064E3B), // Deep Emerald
+                Color(0xFF022C22)  // Dark Forest
+            )
         )
-    )
+    }
 
     Card(
         modifier = modifier

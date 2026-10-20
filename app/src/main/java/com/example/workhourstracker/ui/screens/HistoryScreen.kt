@@ -96,6 +96,9 @@ fun HistoryScreen(
     var shiftToDelete by remember { mutableStateOf<WorkShift?>(null) }
     var showShareMenu by remember { mutableStateOf(false) }
 
+    val onEditShift: (WorkShift) -> Unit = remember { { shift -> shiftToEdit = shift } }
+    val onDeleteShift: (WorkShift) -> Unit = remember { { shift -> shiftToDelete = shift } }
+
     // Dialog for Manual Shift
     if (showManualShiftDialog) {
         ManualShiftDialog(
@@ -526,8 +529,8 @@ fun HistoryScreen(
                     ShiftHistoryCard(
                         shift = shift,
                         currencySymbol = currencySymbol,
-                        onEdit = { shiftToEdit = shift },
-                        onDelete = { shiftToDelete = shift }
+                        onEdit = onEditShift,
+                        onDelete = onDeleteShift
                     )
                 }
             }
@@ -543,8 +546,8 @@ fun HistoryScreen(
 fun ShiftHistoryCard(
     shift: WorkShift,
     currencySymbol: String,
-    onEdit: () -> Unit,
-    onDelete: () -> Unit,
+    onEdit: (WorkShift) -> Unit,
+    onDelete: (WorkShift) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -555,7 +558,7 @@ fun ShiftHistoryCard(
                 color = MaterialTheme.colorScheme.outline.copy(alpha = 0.15f),
                 shape = RoundedCornerShape(20.dp)
             )
-            .clickable(onClick = onEdit),
+            .clickable { onEdit(shift) },
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
@@ -591,7 +594,7 @@ fun ShiftHistoryCard(
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     IconButton(
-                        onClick = onEdit,
+                        onClick = { onEdit(shift) },
                         modifier = Modifier.size(32.dp)
                     ) {
                         Icon(
@@ -603,7 +606,7 @@ fun ShiftHistoryCard(
                     }
                     Spacer(modifier = Modifier.width(4.dp))
                     IconButton(
-                        onClick = onDelete,
+                        onClick = { onDelete(shift) },
                         modifier = Modifier.size(32.dp)
                     ) {
                         Icon(

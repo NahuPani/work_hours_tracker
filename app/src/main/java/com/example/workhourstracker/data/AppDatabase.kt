@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-@Database(entities = [WorkShift::class], version = 3, exportSchema = true)
+@Database(entities = [WorkShift::class], version = 4, exportSchema = true)
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun workShiftDao(): WorkShiftDao
@@ -27,7 +27,12 @@ abstract class AppDatabase : RoomDatabase() {
             override fun migrate(db: SupportSQLiteDatabase) {
                 // Intentional no-op: v3 has identical schema to v2.
                 // Version was bumped for app-level logic changes only (daily overtime, backup format).
-                // If adding columns in a future version, create MIGRATION_3_4 with ALTER TABLE statements.
+            }
+        }
+
+        val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_work_shifts_startTimeMillis ON work_shifts(startTimeMillis)")
             }
         }
 
@@ -38,7 +43,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "work_hours_database"
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
                     .build()
                 INSTANCE = instance
                 instance

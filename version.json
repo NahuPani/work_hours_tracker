@@ -1,6 +1,6 @@
 {
-  "version": "1.3.0",
-  "versionCode": 5,
+  "version": "1.3.1",
+  "versionCode": 6,
   "downloadUrl": "https://github.com/NahuPani/work_hours_tracker/raw/main/release/work_hours_tracker_latest.apk",
-  "releaseNotes": "Versión 1.3.0: Nuevo Widget Fintech Emerald para la pantalla de inicio, exportación de reportes a PDF oficial, comparativa semana contra semana y rediseño completo de la interfaz."
+  "releaseNotes": "Versión 1.3.1: Nuevo selector nativo (SAF) con vista previa de copias de seguridad, optimización en base de datos SQLite con índices y máxima fluidez en listas de turnos."
 }

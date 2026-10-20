@@ -2,13 +2,19 @@ package com.example.workhourstracker.data
 
 import androidx.compose.runtime.Immutable
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
 @Immutable
-@Entity(tableName = "work_shifts")
+@Entity(
+    tableName = "work_shifts",
+    indices = [
+        Index(value = ["startTimeMillis"])
+    ]
+)
 data class WorkShift(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,

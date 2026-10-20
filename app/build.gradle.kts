@@ -12,13 +12,14 @@ android {
         applicationId = "com.example.workhourstracker"
         minSdk = 24
         targetSdk = 34
-        versionCode = 5
-        versionName = "1.3.0"
+        versionCode = 6
+        versionName = "1.3.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary = true
         }
+        resourceConfigurations += listOf("es")
     }
 
     signingConfigs {
@@ -58,6 +59,8 @@ android {
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            excludes += "/META-INF/*.version"
+            excludes += "/DebugProbesKt.bin"
         }
     }
 }

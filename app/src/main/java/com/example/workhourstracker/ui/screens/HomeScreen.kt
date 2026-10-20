@@ -64,6 +64,7 @@ fun HomeScreen(
     val enableOvertime by viewModel.enableOvertime.collectAsState()
     val summary by viewModel.earningsSummary.collectAsState()
     val shifts by viewModel.allShifts.collectAsState()
+    val recentShifts = remember(shifts) { shifts.take(3) }
     val weeklyActivity by viewModel.weeklyActivity.collectAsState()
     val updateInfo by viewModel.updateInfo.collectAsState()
 
@@ -113,10 +114,7 @@ fun HomeScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column {
-                    val todayKey = remember { java.util.Calendar.getInstance() }.let {
-                        it.get(java.util.Calendar.YEAR) * 1000 + it.get(java.util.Calendar.DAY_OF_YEAR)
-                    }
-                    val dateFormatted = remember(todayKey) {
+                    val dateFormatted = remember {
                         SimpleDateFormat("EEEE, d 'de' MMMM", Locale("es", "ES"))
                             .format(Date())
                             .replaceFirstChar { it.uppercase() }
@@ -267,7 +265,7 @@ fun HomeScreen(
                 }
             }
         } else {
-            items(shifts.take(3), key = { it.id }) { shift ->
+            items(recentShifts, key = { it.id }) { shift ->
                 RecentShiftItem(shift = shift, currencySymbol = currencySymbol)
             }
         }

@@ -1,6 +1,6 @@
 {
-  "version": "1.3.2",
-  "versionCode": 7,
+  "version": "1.3.3",
+  "versionCode": 8,
   "downloadUrl": "https://github.com/NahuPani/work_hours_tracker/raw/main/release/work_hours_tracker_latest.apk",
-  "releaseNotes": "Versión 1.3.2: Actualización automática integrada (In-App Update) con barra de progreso, sin necesidad de salir al navegador ni buscar archivos."
+  "releaseNotes": "Versión 1.3.3: Rediseño compacto del registro de turnos: horarios conectados y cálculo integrado en una sola barra ergonómica."
 }

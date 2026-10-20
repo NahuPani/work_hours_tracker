@@ -22,9 +22,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.Login
 import androidx.compose.material.icons.automirrored.filled.Logout
-import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Schedule
@@ -39,14 +39,12 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -57,7 +55,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.workhourstracker.ui.theme.AccentAmber
-import com.example.workhourstracker.ui.theme.AccentCyan
 import com.example.workhourstracker.ui.theme.AccentEmerald
 import com.example.workhourstracker.ui.theme.PrimaryBlue
 import java.text.SimpleDateFormat
@@ -148,7 +145,7 @@ fun DirectShiftCard(
         )
     }
 
-    // Calculate Milliseconds and Duration (Memoized for max 60/120fps smoothness)
+    // Calculate Milliseconds and Duration
     val startCal = remember(selectedCalendar, startHour, startMinute) {
         (selectedCalendar.clone() as Calendar).apply {
             set(Calendar.HOUR_OF_DAY, startHour)
@@ -196,45 +193,38 @@ fun DirectShiftCard(
             .border(
                 width = 1.dp,
                 color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
-                shape = RoundedCornerShape(26.dp)
+                shape = RoundedCornerShape(22.dp)
             ),
-        shape = RoundedCornerShape(26.dp),
+        shape = RoundedCornerShape(22.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(22.dp)
+                .padding(16.dp)
         ) {
-            // Header: Title & Interactive Date Pill
+            // 1. Header: Compact Title & Date Pill
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column {
-                    Text(
-                        text = "Registrar Turno",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Text(
-                        text = "Selecciona tus horarios",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
+                Text(
+                    text = "Registrar Turno",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Black,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
 
                 // Date Chip
                 val isToday = isSameDay(selectedCalendar, Calendar.getInstance())
                 val dateLabel = if (isToday) {
                     "Hoy, " + SimpleDateFormat("d MMM", Locale("es", "ES")).format(selectedCalendar.time)
                 } else {
-                    SimpleDateFormat("d MMM yyyy", Locale("es", "ES")).format(selectedCalendar.time)
+                    SimpleDateFormat("d MMM", Locale("es", "ES")).format(selectedCalendar.time)
                 }
 
                 Row(
@@ -243,37 +233,38 @@ fun DirectShiftCard(
                         .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f))
                         .border(
                             width = 1.dp,
-                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
+                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.25f),
                             shape = RoundedCornerShape(50)
                         )
                         .clickable { datePickerDialog.show() }
-                        .padding(horizontal = 14.dp, vertical = 7.dp),
+                        .padding(horizontal = 10.dp, vertical = 5.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
                         imageVector = Icons.Default.CalendarToday,
                         contentDescription = "Fecha",
                         tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(14.dp)
+                        modifier = Modifier.size(13.dp)
                     )
-                    Spacer(modifier = Modifier.width(6.dp))
+                    Spacer(modifier = Modifier.width(5.dp))
                     Text(
                         text = dateLabel,
-                        style = MaterialTheme.typography.labelMedium,
+                        style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
-            // Time Selector Boxes (Entrada & Salida side-by-side)
+            // 2. Connected Time Selector (Entrada -> Salida)
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(14.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                ModernTimeBox(
+                CompactTimeBox(
                     modifier = Modifier.weight(1f),
                     title = "ENTRADA",
                     timeText = String.format(Locale.US, "%02d:%02d", startHour, startMinute),
@@ -287,7 +278,14 @@ fun DirectShiftCard(
                     }
                 )
 
-                ModernTimeBox(
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
+                    modifier = Modifier.size(18.dp)
+                )
+
+                CompactTimeBox(
                     modifier = Modifier.weight(1f),
                     title = "SALIDA",
                     timeText = String.format(Locale.US, "%02d:%02d", endHour, endMinute),
@@ -302,103 +300,49 @@ fun DirectShiftCard(
                 )
             }
 
-            Spacer(modifier = Modifier.height(18.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
-            // Hero Live Preview Banner
-            Box(
+            // 3. Compact Integrated Summary Bar (Duración + Ganancia proyectada)
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(
-                        Brush.horizontalGradient(
-                            colors = listOf(
-                                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
-                                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
-                            )
-                        )
-                    )
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f))
                     .border(
                         width = 1.dp,
-                        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.15f),
-                        shape = RoundedCornerShape(20.dp)
+                        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.12f),
+                        shape = RoundedCornerShape(14.dp)
                     )
-                    .padding(18.dp)
+                    .padding(horizontal = 12.dp, vertical = 9.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(24.dp)
-                                        .clip(CircleShape)
-                                        .background(PrimaryBlue.copy(alpha = 0.15f)),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Schedule,
-                                        contentDescription = null,
-                                        tint = PrimaryBlue,
-                                        modifier = Modifier.size(14.dp)
-                                    )
-                                }
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = "Tiempo total",
-                                    style = MaterialTheme.typography.labelMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                            Spacer(modifier = Modifier.height(6.dp))
-                            Text(
-                                text = if (hours > 0) "${hours}h ${minutes}m" else "${minutes}m",
-                                style = MaterialTheme.typography.headlineSmall,
-                                fontWeight = FontWeight.ExtraBold,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                        }
+                // Duration & Overtime
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.Schedule,
+                        contentDescription = null,
+                        tint = PrimaryBlue,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = if (hours > 0) "${hours}h ${minutes}m" else "${minutes}m",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
 
-                        Column(horizontalAlignment = Alignment.End) {
-                            Text(
-                                text = "Total a cobrar",
-                                style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            AnimatedMoneyText(
-                                amount = estimatedEarnings,
-                                currencySymbol = currencySymbol,
-                                style = MaterialTheme.typography.headlineMedium,
-                                fontWeight = FontWeight.Black,
-                                color = AccentEmerald,
-                                decimals = 2
-                            )
-                        }
-                    }
-
-                    // Overtime badge if applicable
                     if (overtimeHours > 0.0) {
-                        Spacer(modifier = Modifier.height(10.dp))
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Box(
                             modifier = Modifier
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(AccentAmber.copy(alpha = 0.15f))
-                                .padding(horizontal = 10.dp, vertical = 5.dp)
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(AccentAmber.copy(alpha = 0.18f))
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
                         ) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.TrendingUp,
-                                contentDescription = "Horas extras",
-                                tint = AccentAmber,
-                                modifier = Modifier.size(14.dp)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
                             Text(
-                                text = "Incluye ${String.format(Locale.US, "%.1f", overtimeHours)}h extra (+${((overtimeMultiplier - 1.0) * 100).toInt()}%)",
+                                text = "+${String.format(Locale.US, "%.1f", overtimeHours)}h",
                                 style = MaterialTheme.typography.labelSmall,
                                 fontWeight = FontWeight.Bold,
                                 color = AccentAmber
@@ -406,28 +350,45 @@ fun DirectShiftCard(
                         }
                     }
                 }
+
+                // Projected Total
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "A cobrar: ",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    AnimatedMoneyText(
+                        amount = estimatedEarnings,
+                        currencySymbol = currencySymbol,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Black,
+                        color = AccentEmerald,
+                        decimals = 2
+                    )
+                }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
-            // Clean Note TextField
+            // 4. Compact Note Field
             OutlinedTextField(
                 value = noteText,
                 onValueChange = {
                     onNoteChange(it)
                     successMessage = null
                 },
-                label = { Text("Nota o detalle (opcional)") },
-                placeholder = { Text("Ej: Turno tarde, guardia...") },
-                shape = RoundedCornerShape(14.dp),
+                label = { Text("Nota (opcional)") },
+                placeholder = { Text("Ej: Guardia, Turno tarde...") },
+                shape = RoundedCornerShape(12.dp),
                 colors = OutlinedTextFieldDefaults.colors(
-                    unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.25f)
                 ),
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
             )
 
-            // Success feedback
+            // Success feedback animation
             AnimatedVisibility(
                 visible = successMessage != null,
                 enter = fadeIn(),
@@ -437,16 +398,16 @@ fun DirectShiftCard(
                     Text(
                         text = msg,
                         color = AccentEmerald,
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = MaterialTheme.typography.bodySmall,
                         fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(top = 10.dp)
+                        modifier = Modifier.padding(top = 6.dp)
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(18.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
-            // Save Shift Button
+            // 5. Action Button: Guardar Jornada
             Button(
                 onClick = {
                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -459,12 +420,12 @@ fun DirectShiftCard(
                         noteText
                     )
                     android.widget.Toast.makeText(context, "✓ ¡Jornada guardada con éxito en el Historial!", android.widget.Toast.LENGTH_SHORT).show()
-                    successMessage = "✓ ¡Turno de ${hours}h ${minutes}m guardado con éxito!"
+                    successMessage = "✓ ¡Turno de ${hours}h ${minutes}m guardado!"
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(54.dp),
-                shape = RoundedCornerShape(16.dp),
+                    .height(48.dp),
+                shape = RoundedCornerShape(14.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.primary
                 ),
@@ -473,13 +434,13 @@ fun DirectShiftCard(
                 Icon(
                     imageVector = Icons.Default.CheckCircle,
                     contentDescription = "Guardar",
-                    modifier = Modifier.size(20.dp)
+                    modifier = Modifier.size(18.dp)
                 )
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(6.dp))
                 Text(
                     text = "GUARDAR JORNADA",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
+                    fontWeight = FontWeight.ExtraBold,
+                    fontSize = 14.sp,
                     letterSpacing = 0.5.sp
                 )
             }
@@ -488,25 +449,25 @@ fun DirectShiftCard(
 }
 
 @Composable
-private fun ModernTimeBox(
+fun CompactTimeBox(
+    modifier: Modifier = Modifier,
     title: String,
     timeText: String,
     icon: ImageVector,
     accentColor: Color,
     onClickTime: () -> Unit,
-    onSetNow: () -> Unit,
-    modifier: Modifier = Modifier
+    onSetNow: () -> Unit
 ) {
     Card(
         modifier = modifier
-            .clip(RoundedCornerShape(18.dp))
+            .clip(RoundedCornerShape(16.dp))
             .border(
                 width = 1.dp,
-                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
-                shape = RoundedCornerShape(18.dp)
+                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.18f),
+                shape = RoundedCornerShape(16.dp)
             )
             .clickable(onClick = onClickTime),
-        shape = RoundedCornerShape(18.dp),
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)
         )
@@ -514,73 +475,68 @@ private fun ModernTimeBox(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(14.dp)
+                .padding(horizontal = 12.dp, vertical = 9.dp)
         ) {
+            // Mini Header: Icon + Title + "Ahora"
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        modifier = Modifier
-                            .size(22.dp)
-                            .clip(CircleShape)
-                            .background(accentColor.copy(alpha = 0.15f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = icon,
-                            contentDescription = null,
-                            tint = accentColor,
-                            modifier = Modifier.size(13.dp)
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(6.dp))
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = accentColor,
+                        modifier = Modifier.size(12.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
                     Text(
                         text = title,
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontSize = 10.sp
                     )
                 }
 
                 // Quick "Ahora" chip
                 Box(
                     modifier = Modifier
-                        .clip(RoundedCornerShape(8.dp))
+                        .clip(RoundedCornerShape(6.dp))
                         .background(accentColor.copy(alpha = 0.15f))
                         .clickable(onClick = onSetNow)
-                        .padding(horizontal = 7.dp, vertical = 3.dp)
+                        .padding(horizontal = 6.dp, vertical = 2.dp)
                 ) {
                     Text(
                         text = "Ahora",
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Bold,
-                        color = accentColor
+                        color = accentColor,
+                        fontSize = 9.sp
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(4.dp))
 
-            // Time Display
+            // Time Display (Big & Centered)
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(12.dp))
+                    .clip(RoundedCornerShape(10.dp))
                     .background(MaterialTheme.colorScheme.surface)
                     .border(
                         width = 1.dp,
-                        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.15f),
-                        shape = RoundedCornerShape(12.dp)
+                        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.12f),
+                        shape = RoundedCornerShape(10.dp)
                     )
-                    .padding(vertical = 12.dp),
+                    .padding(vertical = 6.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = timeText,
-                    fontSize = 30.sp,
+                    fontSize = 24.sp,
                     fontWeight = FontWeight.Black,
                     fontFamily = FontFamily.Monospace,
                     color = MaterialTheme.colorScheme.onSurface

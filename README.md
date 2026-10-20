@@ -11,7 +11,7 @@
 ![UI](https://img.shields.io/badge/UI-Jetpack%20Compose%20%26%20Material%203-4285F4?style=flat-square&logo=jetpackcompose&logoColor=white)
 ![Database](https://img.shields.io/badge/Database-Room%20SQLite%20(Offline)-F9AB00?style=flat-square&logo=sqlite&logoColor=black)
 ![License](https://img.shields.io/badge/License-MIT-10B981?style=flat-square)
-![Release](https://img.shields.io/badge/Version-v1.3.1-10B981?style=flat-square)
+![Release](https://img.shields.io/badge/Version-v1.3.2-10B981?style=flat-square)
 
 Una aplicación nativa para Android construida con **Kotlin**, **Jetpack Compose** y **Material 3**. Diseñada para trabajadores por hora, contratistas y freelancers que buscan registrar con precisión sus jornadas, turnos partidos o nocturnos, y ver proyectados sus ingresos al instante.
 
@@ -19,7 +19,7 @@ Una aplicación nativa para Android construida con **Kotlin**, **Jetpack Compose
 
 <p align="center">
   <a href="https://github.com/NahuPani/work_hours_tracker/raw/main/release/work_hours_tracker_latest.apk">
-    <img src="https://img.shields.io/badge/📥%20DESCARGAR%20APK%20(v1.3.1)-10B981?style=for-the-badge&logo=android&logoColor=white" alt="Descargar APK" height="42" />
+    <img src="https://img.shields.io/badge/📥%20DESCARGAR%20APK%20(v1.3.2)-10B981?style=for-the-badge&logo=android&logoColor=white" alt="Descargar APK" height="42" />
   </a>
 </p>
 

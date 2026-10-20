@@ -12,8 +12,8 @@ android {
         applicationId = "com.example.workhourstracker"
         minSdk = 24
         targetSdk = 34
-        versionCode = 6
-        versionName = "1.3.1"
+        versionCode = 7
+        versionName = "1.3.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -106,4 +106,16 @@ dependencies {
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
+}
+
+afterEvaluate {
+    tasks.findByName("assembleRelease")?.doLast {
+        val src = layout.buildDirectory.file("outputs/apk/release/app-release.apk").get().asFile
+        if (src.exists()) {
+            val dest = rootProject.file("release/work_hours_tracker_latest.apk")
+            dest.parentFile.mkdirs()
+            src.copyTo(dest, overwrite = true)
+            println("✓ APK Release copiado automáticamente a: ${dest.absolutePath}")
+        }
+    }
 }

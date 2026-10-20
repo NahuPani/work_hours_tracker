@@ -37,7 +37,7 @@ object UpdateChecker {
 
             // 1. Check version.json from repository main branch (direct, no GitHub API rate-limit)
             try {
-                val rawJson = httpGetJson(RAW_VERSION_URL)
+                val rawJson = httpGetJson("$RAW_VERSION_URL?nocache=${System.currentTimeMillis()}")
                 if (rawJson != null) {
                     val rawVer = rawJson.optString("version", "").removePrefix("v").removePrefix("V").trim()
                     if (rawVer.isNotBlank()) {
@@ -117,8 +117,11 @@ object UpdateChecker {
             requestMethod = "GET"
             connectTimeout = 5000
             readTimeout = 5000
+            useCaches = false
             setRequestProperty("Accept", "application/json")
             setRequestProperty("User-Agent", "WorkHoursTracker-Android")
+            setRequestProperty("Cache-Control", "no-cache, no-store, must-revalidate")
+            setRequestProperty("Pragma", "no-cache")
         }
 
         try {

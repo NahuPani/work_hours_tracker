@@ -1,103 +1,156 @@
-# ⏱️ Control de Horas y Ganancias (Android)
+<div align="center">
 
-Una aplicación nativa para Android construida con **Kotlin**, **Jetpack Compose** y **Material 3** para registrar tus horas laborales (entrada y salida), configurar cuánto ganas por hora y calcular automáticamente tus ingresos acumulados (diarios, semanales y mensuales).
+<img src="docs/assets/icon.jpg" width="115" style="border-radius: 26px; box-shadow: 0 10px 30px rgba(16,185,129,0.3);" alt="Mi Turno Logo" />
+
+# ⚡ Mi Turno
+### Control Inteligente de Horas Laborales y Ganancias en Tiempo Real
+
+[![Android CI](https://github.com/NahuPani/work_hours_tracker/actions/workflows/android-ci.yml/badge.svg)](https://github.com/NahuPani/work_hours_tracker/actions/workflows/android-ci.yml)
+![Platform](https://img.shields.io/badge/Platform-Android%208.0%2B-3DDC84?style=flat-square&logo=android&logoColor=white)
+![Kotlin](https://img.shields.io/badge/Kotlin-1.9.24-7F52FF?style=flat-square&logo=kotlin&logoColor=white)
+![UI](https://img.shields.io/badge/UI-Jetpack%20Compose%20%26%20Material%203-4285F4?style=flat-square&logo=jetpackcompose&logoColor=white)
+![Database](https://img.shields.io/badge/Database-Room%20SQLite%20(Offline)-F9AB00?style=flat-square&logo=sqlite&logoColor=black)
+![License](https://img.shields.io/badge/License-MIT-10B981?style=flat-square)
+![Release](https://img.shields.io/badge/Version-v1.3.0-10B981?style=flat-square)
+
+Una aplicación nativa para Android construida con **Kotlin**, **Jetpack Compose** y **Material 3**. Diseñada para trabajadores por hora, contratistas y freelancers que buscan registrar con precisión sus jornadas, turnos partidos o nocturnos, y ver proyectados sus ingresos al instante.
+
+<br />
+
+<p align="center">
+  <a href="https://github.com/NahuPani/work_hours_tracker/raw/main/release/work_hours_tracker_latest.apk">
+    <img src="https://img.shields.io/badge/📥%20DESCARGAR%20APK%20(v1.3.0)-10B981?style=for-the-badge&logo=android&logoColor=white" alt="Descargar APK" height="42" />
+  </a>
+</p>
+
+</div>
+
+---
+
+## 📱 Capturas de Pantalla
+
+<div align="center">
+<table>
+  <tr>
+    <td align="center" width="25%">
+      <b>⚡ Registro en Vivo</b><br><br>
+      <img src="docs/screenshots/home.png" width="220" alt="Pantalla de Registro" />
+    </td>
+    <td align="center" width="25%">
+      <b>📋 Historial & PDF</b><br><br>
+      <img src="docs/screenshots/history.png" width="220" alt="Historial de Turnos" />
+    </td>
+    <td align="center" width="25%">
+      <b>📱 Widget de Inicio</b><br><br>
+      <img src="docs/screenshots/widget.png" width="220" alt="Widget Mi Turno" />
+    </td>
+    <td align="center" width="25%">
+      <b>⚙️ Ajustes & Ciclos</b><br><br>
+      <img src="docs/screenshots/settings.png" width="220" alt="Configuración" />
+    </td>
+  </tr>
+</table>
+</div>
 
 ---
 
 ## 🌟 Características Principales
 
-1. **Configuración de Tarifa por Hora y Moneda**:
-   - Ajusta tu valor por hora en cualquier momento (ej: `$2,500` / `$15.00`).
-   - Elige el símbolo de moneda (`$`, `€`, `USD`, `ARS`, etc.).
-2. **Registro Directo y Persistente (Borrador Protegido)**:
-   - Selección ágil de hora de Entrada y Salida con selectores nativos o botón "Ahora".
-   - Soporte nativo para **turnos nocturnos** (ej: 22:00 a 06:00 del día siguiente).
-   - Los datos en pantalla nunca se pierden al cambiar de pestaña en la aplicación.
-   - **Jornadas limpias sin deducción de descansos**: pensado para trabajos donde los descansos son 100% pagos.
-   - **Horas extras automáticas y cálculo por día**: si trabajas en **turnos partidos** (ej: mañana y tarde el mismo día), las horas diarias se acumulan correctamente antes de calcular horas extras.
-   - Cálculo instantáneo de horas trabajadas y dinero acumulado a cobrar en tiempo real con vibración háptica.
-3. **Ciclo Laboral Personalizado (Miércoles a Martes)**:
-   - **Hoy**: Total de dinero ganado y horas trabajadas en el día actual.
-   - **Esta Semana**: Acumulado exacto de tu ciclo laboral (por defecto de **Miércoles a Martes**, configurable desde Ajustes).
-   - **Gráfico de Barras Semanal**: Visualización interactiva de tu rendimiento día a día (Mié, Jue, Vie, Sáb, Dom, Lun, Mar).
-   - **Este Mes**: Acumulado del mes calendario.
-4. **Historial Completo con Edición y Reportes**:
-   - **Edición completa**: toca cualquier turno del historial para modificar fecha, horarios o tarifa si cometiste un error.
-   - Filtros avanzados: *Todos*, *Esta Semana (Mié-Mar)*, *Este Mes*, *1ª Quincena (1-15)*, *2ª Quincena (16-fin)* y *Mes Pasado*.
-   - **Compartir por WhatsApp**: genera un resumen formateado listo para enviar a tu empleador o cliente.
-   - **Exportar a CSV (Excel)**: descarga o comparte un archivo tabular con todas las jornadas desglosadas.
-   - Eliminación de registros con diálogo de confirmación.
-5. **Copia de Seguridad Inteligente (Sin Duplicados)**:
-   - Exporta todos tus datos y configuraciones a un archivo JSON.
-   - Al restaurar, fusiona de forma segura **omitiendo turnos duplicados** o permite reemplazar todo limpiamente.
-6. **Buscador de Actualizaciones Integrado**:
-   - Consulta automáticamente a GitHub si hay una nueva versión disponible y permite descargarla directamente.
-7. **Privacidad y Seguridad de Base de Datos**:
-   - Base de datos local **Room (SQLite)** con migraciones seguras y exportación de esquemas (nunca borra tus datos en actualizaciones). 100% offline y privado.
+### 📱 1. Widget de Pantalla de Inicio (Estilo Fintech Emerald)
+- Muestra en tiempo real tus **ganancias acumuladas** y las **horas trabajadas** en la semana sin necesidad de abrir la app.
+- Acceso directo con un solo toque (`+ Registrar Turno`) que lanza la aplicación inmediatamente.
+- Sincronización automática de fondo cada vez que registras o modificas una jornada.
+- Estética cuidada con diseño oscuro, cápsulas de información y gradiente esmeralda.
+
+### ⚡ 2. Tarjeta Fintech & Contador Animado
+- **Fintech Card con Gradiente Profundo**: Resumen instantáneo de tus ganancias de *Hoy*, *Esta Semana* y *Este Mes*.
+- **Contador Dinámico (`AnimatedMoneyText`)**: Animación estilo ticker bancario que rueda suavemente al actualizarse el monto.
+- **Insignia de Día Récord (`🔥`)**: Reconoce automáticamente el día con mayor recaudación de la semana.
+
+### 📄 3. Exportación a PDF Oficial y Planillas CSV
+- **Reporte PDF Formal**: Genera en un toque un comprobante profesional con membrete, tabla detallada de fechas, horarios, horas estándar, horas extras y monto total a liquidar.
+- **Exportación CSV (Excel)**: Compatible con cualquier software de hojas de cálculo para control contable.
+- **Compartir por WhatsApp**: Envía un resumen claro y formateado directamente a tu empleador o cliente.
+
+### 📈 4. Comparativa Semana contra Semana
+- Indicador inteligente en la tarjeta principal que compara el rendimiento con respecto a la semana previa (ej: `▲ +12% vs semana anterior`).
+- Visualización de tendencia de ingresos y horas totales dedicadas.
+
+### ⏱️ 5. Turnos Nocturnos y Horas Extras Inteligentes
+- **Turnos nocturnos**: Soporte nativo para jornadas que cruzan la medianoche (ej: de 22:00 a 06:00).
+- **Turnos partidos acumulados**: Si trabajas mañana y tarde el mismo día, el sistema suma las horas de ambas jornadas antes de disparar el recargo de horas extras.
+- Multiplicador de recargo configurable (ej: 1.5x, 2.0x) con umbral de jornada estándar a medida.
+- **Jornadas limpias**: Sin deducciones automáticas de descanso, adaptado a convenios laborales donde la pausa es remunerada.
+
+### 🗓️ 6. Ciclos Laborales Personalizables
+- Configura el día de corte de tu liquidación semanal (por ejemplo, de **Miércoles a Martes**, **Lunes a Domingo**, etc.).
+- Gráfico de barras interactivo de 7 días que refleja exactamente el ciclo elegido.
+
+### 🔒 7. Privacidad Total & 100% Offline
+- Base de datos local **Room (SQLite)** de alta velocidad.
+- Cero servidores, cero recolección de datos y cero publicidad. Tus horarios y finanzas permanecen exclusivamente en tu dispositivo.
+
+### 💾 8. Copia de Seguridad Inteligente
+- Exportación e importación segura en formato **JSON**.
+- Algoritmo de restauración con deduplicación: fusiona nuevos turnos sin duplicar los registros existentes.
+
+### 🔄 9. Actualizador Automático Integrado
+- Detección automática de nuevas versiones lanzadas en este repositorio de GitHub con descarga directa del APK.
 
 ---
 
-## 📁 Estructura del Proyecto
+## 🛠️ Stack Tecnológico & Arquitectura
 
-```text
-work_hours_tracker/
-├── app/
-│   ├── build.gradle.kts                # Dependencias (Compose, Room, Navigation, KSP)
-│   └── src/main/
-│       ├── AndroidManifest.xml
-│       ├── res/                        # Iconos adaptativos, colores y temas
-│       └── java/com/example/workhourstracker/
-│           ├── MainActivity.kt         # Punto de entrada y barra de navegación inferior
-│           ├── data/
-│           │   ├── WorkShift.kt        # Entidad de la BD con horas extras y descansos
-│           │   ├── WorkShiftDao.kt     # Consultas SQL / Room DAO con operaciones masivas
-│           │   ├── AppDatabase.kt      # Singleton de la base de datos Room v2
-│           │   └── UserPreferences.kt  # Almacenamiento local de tarifas, horas extras y descansos
-│           ├── ui/
-│           │   ├── theme/              # Paleta de colores, tipografía y tema Material 3
-│           │   ├── components/
-│           │   │   ├── DirectShiftCard.kt      # Carga directa de horas, descanso, extras y háptico
-│           │   │   ├── EarningsSummaryCard.kt  # Resumen de ganancias Hoy / Semana / Mes
-│           │   │   ├── HourlyRateDialog.kt     # Diálogo para cambiar el valor de la hora
-│           │   │   ├── EditShiftDialog.kt      # Diálogo para editar turnos existentes
-│           │   │   ├── OvertimeDialog.kt       # Diálogo para configurar horas extras y recargo
-│           │   │   ├── RestoreDialog.kt        # Diálogo para restaurar backup JSON
-│           │   │   └── ManualShiftDialog.kt    # Diálogo para cargar turnos pasados desde FAB
-│           │   └── screens/
-│           │       ├── HomeScreen.kt           # Pantalla principal de registro
-│           │       ├── HistoryScreen.kt        # Pantalla de historial con edición y compartir
-│           │       └── SettingsScreen.kt       # Configuración, backup/restore y estadísticas
-│           └── viewmodel/
-│               └── WorkHoursViewModel.kt       # Lógica reactiva, horas extras, backup y reportes
-```├── build.gradle.kts                    # Plugins del proyecto (Gradle, Kotlin, KSP)
-├── settings.gradle.kts
-└── gradle.properties
-```
+El proyecto sigue los lineamientos modernos de arquitectura recomendados por Google (**MVVM + Unidirectional Data Flow**):
+
+| Componente | Tecnología |
+| :--- | :--- |
+| **Lenguaje** | [Kotlin 1.9.24](https://kotlinlang.org/) |
+| **Interfaz (UI)** | [Jetpack Compose](https://developer.android.com/jetpack/compose) + [Material 3](https://m3.material.io/) |
+| **Patrón Arquitectónico** | Model-View-ViewModel (MVVM) con `StateFlow` reactivo |
+| **Base de Datos** | [Room Database](https://developer.android.com/training/data-storage/room) v2 (SQLite) con KSP |
+| **Concurrencia** | Kotlin Coroutines (`Dispatchers.IO` / `Dispatchers.Main`) |
+| **Navegación** | Jetpack Navigation Compose |
+| **Widgets** | Android AppWidget Provider + `RemoteViews` |
+| **Generación de Documentos** | Android Native `PdfDocument` API + Android `FileProvider` |
+| **CI/CD** | GitHub Actions (Compilación y distribución automatizada) |
 
 ---
 
-## 🚀 Cómo abrir y compilar en Android Studio
+## 🚀 Cómo Compilar el Proyecto
 
-### Requisitos Previos:
-- **Android Studio** (Recomendado: Iguana, Jellyfish, Koala o superior).
-  - Si aún no lo tienes instalado, descárgalo gratis de: [developer.android.com/studio](https://developer.android.com/studio).
-- **JDK 17** (Viene incluido directamente con Android Studio).
+### Requisitos:
+- **Android Studio** (Koala / Jellyfish / Iguana o más reciente).
+- **JDK 17** o **JDK 21** (incluido en Android Studio).
+- Dispositivo Android físico o Emulador con Android 8.0 (API 24) o superior.
 
 ### Pasos:
-1. Abre **Android Studio**.
-2. Selecciona **Open** (Abrir) y busca la carpeta del proyecto:
-   `C:\Users\Nahu\.gemini\antigravity-ide\scratch\work_hours_tracker`
-3. Espera a que Gradle termine de sincronizar automáticamente las dependencias.
-4. Conecta tu teléfono Android mediante cable USB (con *Depuración por USB* activada) o inicia un Emulador desde el *Device Manager*.
-5. Presiona el botón verde de **Run** ▶️ (`Shift + F10`). ¡La aplicación se instalará y abrirá en tu dispositivo!
+1. Clona este repositorio:
+   ```bash
+   git clone https://github.com/NahuPani/work_hours_tracker.git
+   ```
+2. Abre la carpeta en **Android Studio**.
+3. Deja que Gradle sincronice las dependencias del proyecto.
+4. Conecta tu teléfono por USB con la *Depuración por USB* activada.
+5. Presiona el botón **Run** ▶️ (`Shift + F10`) en Android Studio.
 
 ---
 
-## 📦 Cómo generar un archivo APK para instalar en tu celular
+## 📦 Instalación Rápida (Sin Android Studio)
 
-Si quieres instalar la app directamente en tu teléfono sin mantenerlo conectado:
-1. En Android Studio, ve al menú superior: **Build > Build Bundle(s) / APK(s) > Build APK(s)**.
-2. Android Studio compilará el proyecto y mostrará una notificación en la esquina inferior derecha con un enlace: **locate**.
-3. El archivo generado estará en:
-   `app/build/outputs/apk/debug/app-debug.apk`
-4. Pasa ese archivo `.apk` a tu celular (por WhatsApp, Google Drive, cable USB, Telegram, etc.) y pulsa sobre él para instalarlo.
+Si solo quieres usar la aplicación en tu teléfono:
+1. Ve a la carpeta [`release/`](release/) de este repositorio o toca el botón de descarga superior.
+2. Descarga el archivo [`work_hours_tracker_latest.apk`](https://github.com/NahuPani/work_hours_tracker/raw/main/release/work_hours_tracker_latest.apk).
+3. Ábrelo en tu teléfono Android y pulsa **Instalar**.
+
+---
+
+## 📄 Licencia
+
+Este proyecto está bajo la Licencia **MIT**. Consulta el archivo [LICENSE](LICENSE) para más detalles.
+
+---
+
+<div align="center">
+Desarrollado con ❤️ por <a href="https://github.com/NahuPani">Nahuel Panigo</a>
+</div>

@@ -2,7 +2,10 @@ package com.example.workhourstracker.ui.screens
 
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -13,6 +16,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -23,17 +27,24 @@ import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Restore
+import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Security
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.SystemUpdate
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import java.text.SimpleDateFormat
 import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -55,7 +66,6 @@ import com.example.workhourstracker.ui.components.UpdateAvailableDialog
 import com.example.workhourstracker.ui.theme.AccentEmerald
 import com.example.workhourstracker.ui.viewmodel.WorkHoursViewModel
 import kotlinx.coroutines.launch
-import java.util.Locale
 
 @Composable
 fun SettingsScreen(
@@ -90,8 +100,46 @@ fun SettingsScreen(
     var showRateDialog by remember { mutableStateOf(false) }
     var showOvertimeDialog by remember { mutableStateOf(false) }
     var showRestoreDialog by remember { mutableStateOf(false) }
+    var pendingRestoreJson by remember { mutableStateOf<String?>(null) }
+    var showExportOptionsDialog by remember { mutableStateOf(false) }
     var showUpdateDialog by remember { mutableStateOf(false) }
     var showDayOfWeekDialog by remember { mutableStateOf(false) }
+
+    val openDocumentLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            try {
+                val content = context.contentResolver.openInputStream(uri)?.use { stream ->
+                    stream.bufferedReader().readText()
+                }
+                if (!content.isNullOrBlank()) {
+                    pendingRestoreJson = content
+                    showRestoreDialog = true
+                } else {
+                    Toast.makeText(context, "El archivo seleccionado está vacío.", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                Toast.makeText(context, "Error al leer el archivo: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
+    val createDocumentLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("application/json")
+    ) { uri: Uri? ->
+        if (uri != null) {
+            try {
+                val backupJson = viewModel.exportBackupJson()
+                context.contentResolver.openOutputStream(uri)?.use { stream ->
+                    stream.write(backupJson.toByteArray(Charsets.UTF_8))
+                }
+                Toast.makeText(context, "✓ ¡Copia de seguridad guardada con éxito!", Toast.LENGTH_LONG).show()
+            } catch (e: Exception) {
+                Toast.makeText(context, "Error al guardar respaldo: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
+            }
+        }
+    }
 
     if (showDayOfWeekDialog) {
         val days = listOf(
@@ -189,11 +237,19 @@ fun SettingsScreen(
 
     if (showRestoreDialog) {
         RestoreDialog(
-            onDismiss = { showRestoreDialog = false },
+            initialJson = pendingRestoreJson,
+            onDismiss = {
+                showRestoreDialog = false
+                pendingRestoreJson = null
+            },
+            onPickFileClick = {
+                openDocumentLauncher.launch(arrayOf("application/json", "text/plain", "application/octet-stream", "*/*"))
+            },
             onConfirm = { json, replaceExisting ->
                 coroutineScope.launch {
                     val result = viewModel.restoreBackupJson(json, replaceExisting)
                     showRestoreDialog = false
+                    pendingRestoreJson = null
                     if (result.isSuccess) {
                         val count = result.getOrNull() ?: 0
                         val msg = if (replaceExisting) {
@@ -205,6 +261,76 @@ fun SettingsScreen(
                     } else {
                         Toast.makeText(context, "Error al restaurar: archivo inválido", Toast.LENGTH_LONG).show()
                     }
+                }
+            }
+        )
+    }
+
+    if (showExportOptionsDialog) {
+        val sdf = SimpleDateFormat("yyyy-MM-dd_HHmm", Locale.getDefault())
+        val defaultFileName = "MiTurno_Respaldo_${sdf.format(Date())}.json"
+
+        AlertDialog(
+            onDismissRequest = { showExportOptionsDialog = false },
+            title = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.Backup,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Exportar Copia de Seguridad", fontWeight = FontWeight.Bold)
+                }
+            },
+            text = {
+                Column {
+                    Text(
+                        "Elige cómo deseas guardar o compartir tu archivo de respaldo:",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Button(
+                        onClick = {
+                            showExportOptionsDialog = false
+                            createDocumentLauncher.launch(defaultFileName)
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Icon(Icons.Default.Save, contentDescription = null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Guardar en Descargas / Drive", fontWeight = FontWeight.Bold)
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    OutlinedButton(
+                        onClick = {
+                            showExportOptionsDialog = false
+                            val backupJson = viewModel.exportBackupJson()
+                            shareBackupFile(context, backupJson, defaultFileName)
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Icon(Icons.Default.Share, contentDescription = null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Compartir por WhatsApp / Email")
+                    }
+                }
+            },
+            confirmButton = {},
+            dismissButton = {
+                TextButton(onClick = { showExportOptionsDialog = false }) {
+                    Text("Cancelar")
                 }
             }
         )
@@ -369,18 +495,18 @@ fun SettingsScreen(
                     SettingsItem(
                         icon = Icons.Default.Backup,
                         title = "Exportar Copia de Seguridad",
-                        subtitle = "Guarda o envía tus registros en archivo JSON",
-                        onClick = {
-                            val backupJson = viewModel.exportBackupJson()
-                            shareBackupText(context, backupJson)
-                        }
+                        subtitle = "Guarda en Descargas/Drive o comparte por WhatsApp",
+                        onClick = { showExportOptionsDialog = true }
                     )
 
                     SettingsItem(
                         icon = Icons.Default.Restore,
                         title = "Restaurar Copia de Seguridad",
-                        subtitle = "Importa registros desde un respaldo previo",
-                        onClick = { showRestoreDialog = true }
+                        subtitle = "Elige un archivo .json de respaldo con vista previa",
+                        onClick = {
+                            pendingRestoreJson = null
+                            showRestoreDialog = true
+                        }
                     )
                 }
             }
@@ -535,9 +661,8 @@ private fun SettingsItem(
     }
 }
 
-private fun shareBackupText(context: Context, backupJson: String) {
+private fun shareBackupFile(context: Context, backupJson: String, fileName: String) {
     try {
-        val fileName = "Mi_Turno_Backup.json"
         val file = java.io.File(context.cacheDir, fileName)
         file.writeText(backupJson)
 
@@ -554,11 +679,11 @@ private fun shareBackupText(context: Context, backupJson: String) {
         }
         val shareIntent = Intent.createChooser(sendIntent, "Guardar o compartir copia de seguridad")
         context.startActivity(shareIntent)
-    } catch (e: Exception) {
+    } catch (_: Exception) {
         // Fallback to text sharing if FileProvider is not configured
         val sendIntent = Intent().apply {
             action = Intent.ACTION_SEND
-            putExtra(Intent.EXTRA_SUBJECT, "Copia de Seguridad - Mi Turno.json")
+            putExtra(Intent.EXTRA_SUBJECT, fileName)
             putExtra(Intent.EXTRA_TEXT, backupJson)
             type = "application/json"
         }

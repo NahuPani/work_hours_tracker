@@ -1,6 +1,6 @@
 {
-  "version": "1.3.3",
-  "versionCode": 8,
+  "version": "1.4.0",
+  "versionCode": 9,
   "downloadUrl": "https://github.com/NahuPani/work_hours_tracker/raw/main/release/work_hours_tracker_latest.apk",
-  "releaseNotes": "Versión 1.3.3: Rediseño compacto del registro de turnos: horarios conectados y cálculo integrado en una sola barra ergonómica."
+  "releaseNotes": "Versión 1.4.0: Liquidaciones semanales en Historial con acordeón y desglose día por día. Navegación entre semanas en el gráfico de la pantalla principal."
 }

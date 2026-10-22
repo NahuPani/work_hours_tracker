@@ -65,7 +65,7 @@ fun HomeScreen(
     val summary by viewModel.earningsSummary.collectAsState()
     val shifts by viewModel.allShifts.collectAsState()
     val recentShifts = remember(shifts) { shifts.take(3) }
-    val weeklyActivity by viewModel.weeklyActivity.collectAsState()
+    val selectedWeekData by viewModel.selectedWeekData.collectAsState()
     val updateInfo by viewModel.updateInfo.collectAsState()
 
     val draftStartHour by viewModel.draftStartHour.collectAsState()
@@ -210,8 +210,11 @@ fun HomeScreen(
         // Weekly Bar Chart
         item {
             WeeklyBarChartCard(
-                weeklyActivity = weeklyActivity,
-                currencySymbol = currencySymbol
+                weekData = selectedWeekData,
+                currencySymbol = currencySymbol,
+                onPreviousWeek = { viewModel.goToPreviousHomeWeek() },
+                onNextWeek = { viewModel.goToNextHomeWeek() },
+                onResetWeek = { viewModel.resetHomeWeek() }
             )
         }
 

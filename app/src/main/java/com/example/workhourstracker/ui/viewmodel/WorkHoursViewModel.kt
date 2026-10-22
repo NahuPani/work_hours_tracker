@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.Immutable
+import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
@@ -52,6 +53,45 @@ data class DayActivity(
     val durationHours: Double,
     val earnings: Double,
     val overtimeHours: Double
+)
+
+@Immutable
+data class DaySettlement(
+    val dateMillis: Long,
+    val dayTitle: String,
+    val shortDayLabel: String,
+    val totalHours: Double,
+    val regularHours: Double,
+    val overtimeHours: Double,
+    val totalEarnings: Double,
+    val shifts: List<WorkShift>
+)
+
+@Immutable
+data class WeeklySettlement(
+    val weekId: String,
+    val startMillis: Long,
+    val endMillis: Long,
+    val weekRangeLabel: String,
+    val isCurrentWeek: Boolean,
+    val totalHours: Double,
+    val regularHours: Double,
+    val overtimeHours: Double,
+    val totalEarnings: Double,
+    val shiftsCount: Int,
+    val daysCount: Int,
+    val daysWithActivity: List<DaySettlement>,
+    val shifts: List<WorkShift>
+)
+
+@Immutable
+data class SelectedWeekData(
+    val weekOffset: Int = 0,
+    val weekRangeLabel: String = "",
+    val isCurrentWeek: Boolean = true,
+    val totalHours: Double = 0.0,
+    val totalEarnings: Double = 0.0,
+    val days: List<DayActivity> = emptyList()
 )
 
 class WorkHoursViewModel(application: Application) : AndroidViewModel(application) {
@@ -109,6 +149,33 @@ class WorkHoursViewModel(application: Application) : AndroidViewModel(applicatio
     // Weekly activity for 7 days (starting from startDayOfWeek, e.g. Miércoles a Martes)
     val weeklyActivity: StateFlow<List<DayActivity>> = combine(allShifts, _startDayOfWeek) { shifts, startDay ->
         calculateWeeklyActivity(shifts, startDay)
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    // Home screen week navigation (0 = current week, -1 = previous week, -2 = 2 weeks ago...)
+    private val _homeWeekOffset = MutableStateFlow(0)
+    val homeWeekOffset: StateFlow<Int> = _homeWeekOffset.asStateFlow()
+
+    val selectedWeekData: StateFlow<SelectedWeekData> = combine(allShifts, _startDayOfWeek, _homeWeekOffset) { shifts, startDay, offset ->
+        calculateSelectedWeekData(shifts, startDay, offset)
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), SelectedWeekData())
+
+    fun goToPreviousHomeWeek() {
+        _homeWeekOffset.value--
+    }
+
+    fun goToNextHomeWeek() {
+        if (_homeWeekOffset.value < 0) {
+            _homeWeekOffset.value++
+        }
+    }
+
+    fun resetHomeWeek() {
+        _homeWeekOffset.value = 0
+    }
+
+    // Weekly settlements for history screen (expandable weeks accordion)
+    val weeklySettlements: StateFlow<List<WeeklySettlement>> = combine(allShifts, _startDayOfWeek) { shifts, startDay ->
+        calculateWeeklySettlements(shifts, startDay)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     // Update checker
@@ -501,27 +568,48 @@ class WorkHoursViewModel(application: Application) : AndroidViewModel(applicatio
     }
 
     private fun calculateWeeklyActivity(shifts: List<WorkShift>, startDay: Int): List<DayActivity> {
+        return calculateSelectedWeekData(shifts, startDay, 0).days
+    }
+
+    private fun calculateSelectedWeekData(shifts: List<WorkShift>, startDay: Int, weekOffset: Int): SelectedWeekData {
         val now = Calendar.getInstance()
         val todayYear = now.get(Calendar.YEAR)
         val todayDayOfYear = now.get(Calendar.DAY_OF_YEAR)
 
-        val cal = Calendar.getInstance().apply {
+        val startCal = Calendar.getInstance().apply {
             set(Calendar.HOUR_OF_DAY, 0)
             set(Calendar.MINUTE, 0)
             set(Calendar.SECOND, 0)
             set(Calendar.MILLISECOND, 0)
             val currentDay = get(Calendar.DAY_OF_WEEK)
             val diff = (currentDay - startDay + 7) % 7
-            add(Calendar.DAY_OF_MONTH, -diff)
+            add(Calendar.DAY_OF_MONTH, -diff + (weekOffset * 7))
         }
+        val weekStartMillis = startCal.timeInMillis
 
-        val list = mutableListOf<DayActivity>()
+        val endCal = (startCal.clone() as Calendar).apply {
+            add(Calendar.DAY_OF_MONTH, 6)
+            set(Calendar.HOUR_OF_DAY, 23)
+            set(Calendar.MINUTE, 59)
+            set(Calendar.SECOND, 59)
+            set(Calendar.MILLISECOND, 999)
+        }
+        val weekEndMillis = endCal.timeInMillis
+
+        val isCurrentWeek = (weekOffset == 0)
+        val startFmt = SimpleDateFormat("d MMM", Locale("es", "ES"))
+        val endFmt = SimpleDateFormat("d MMM", Locale("es", "ES"))
+        val rangeText = "${startFmt.format(Date(weekStartMillis))} — ${endFmt.format(Date(weekEndMillis))}"
+        val weekRangeLabel = if (isCurrentWeek) "Esta Semana ($rangeText)" else rangeText
+
+        val daysList = mutableListOf<DayActivity>()
+        val iterCal = startCal.clone() as Calendar
 
         for (i in 0 until 7) {
-            val startOfDay = cal.timeInMillis
-            val dayOfMonth = cal.get(Calendar.DAY_OF_MONTH)
-            val dayOfWeekVal = cal.get(Calendar.DAY_OF_WEEK)
-            val isToday = (cal.get(Calendar.YEAR) == todayYear && cal.get(Calendar.DAY_OF_YEAR) == todayDayOfYear)
+            val startOfDay = iterCal.timeInMillis
+            val dayOfMonth = iterCal.get(Calendar.DAY_OF_MONTH)
+            val dayOfWeekVal = iterCal.get(Calendar.DAY_OF_WEEK)
+            val isToday = (iterCal.get(Calendar.YEAR) == todayYear && iterCal.get(Calendar.DAY_OF_YEAR) == todayDayOfYear)
 
             val dayLabel = when (dayOfWeekVal) {
                 Calendar.MONDAY -> "Lun"
@@ -534,15 +622,15 @@ class WorkHoursViewModel(application: Application) : AndroidViewModel(applicatio
                 else -> ""
             }
 
-            cal.add(Calendar.DAY_OF_MONTH, 1)
-            val endOfDay = cal.timeInMillis
+            iterCal.add(Calendar.DAY_OF_MONTH, 1)
+            val endOfDay = iterCal.timeInMillis
 
             val dayShifts = shifts.filter { it.startTimeMillis in startOfDay until endOfDay }
             val hours = dayShifts.sumOf { it.durationHours }
             val earnings = dayShifts.sumOf { it.totalEarnings }
             val overtime = dayShifts.sumOf { it.overtimeHours }
 
-            list.add(
+            daysList.add(
                 DayActivity(
                     dayOfWeek = dayLabel,
                     dayOfMonth = dayOfMonth,
@@ -553,6 +641,127 @@ class WorkHoursViewModel(application: Application) : AndroidViewModel(applicatio
                 )
             )
         }
-        return list
+
+        val totalH = daysList.sumOf { it.durationHours }
+        val totalE = daysList.sumOf { it.earnings }
+
+        return SelectedWeekData(
+            weekOffset = weekOffset,
+            weekRangeLabel = weekRangeLabel,
+            isCurrentWeek = isCurrentWeek,
+            totalHours = totalH,
+            totalEarnings = totalE,
+            days = daysList
+        )
+    }
+
+    private fun calculateWeeklySettlements(shifts: List<WorkShift>, startDay: Int): List<WeeklySettlement> {
+        if (shifts.isEmpty()) return emptyList()
+
+        val now = System.currentTimeMillis()
+        val currentWeekCal = Calendar.getInstance().apply {
+            timeInMillis = now
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+            val currentDay = get(Calendar.DAY_OF_WEEK)
+            val diff = (currentDay - startDay + 7) % 7
+            add(Calendar.DAY_OF_MONTH, -diff)
+        }
+        val currentWeekStart = currentWeekCal.timeInMillis
+
+        fun getShiftWeekStart(timeMillis: Long): Long {
+            val cal = Calendar.getInstance().apply {
+                timeInMillis = timeMillis
+                set(Calendar.HOUR_OF_DAY, 0)
+                set(Calendar.MINUTE, 0)
+                set(Calendar.SECOND, 0)
+                set(Calendar.MILLISECOND, 0)
+                val currentDay = get(Calendar.DAY_OF_WEEK)
+                val diff = (currentDay - startDay + 7) % 7
+                add(Calendar.DAY_OF_MONTH, -diff)
+            }
+            return cal.timeInMillis
+        }
+
+        val weekStarts = shifts.map { getShiftWeekStart(it.startTimeMillis) }.toMutableSet()
+        weekStarts.add(currentWeekStart)
+
+        val startFmt = SimpleDateFormat("d 'de' MMM", Locale("es", "ES"))
+        val endFmt = SimpleDateFormat("d 'de' MMM yyyy", Locale("es", "ES"))
+        val dayTitleFmt = SimpleDateFormat("EEEE, d 'de' MMMM", Locale("es", "ES"))
+        val shortDayFmt = SimpleDateFormat("EEE d", Locale("es", "ES"))
+
+        val settlements = mutableListOf<WeeklySettlement>()
+
+        for (wStart in weekStarts.sortedDescending()) {
+            val wEndCal = Calendar.getInstance().apply {
+                timeInMillis = wStart
+                add(Calendar.DAY_OF_MONTH, 6)
+                set(Calendar.HOUR_OF_DAY, 23)
+                set(Calendar.MINUTE, 59)
+                set(Calendar.SECOND, 59)
+                set(Calendar.MILLISECOND, 999)
+            }
+            val wEnd = wEndCal.timeInMillis
+
+            val weekShifts = shifts.filter { it.startTimeMillis in wStart..wEnd }.sortedBy { it.startTimeMillis }
+            val isCurrentWeek = (now in wStart..wEnd)
+
+            if (weekShifts.isEmpty() && !isCurrentWeek) continue
+
+            val totalH = weekShifts.sumOf { it.durationHours }
+            val regH = weekShifts.sumOf { it.regularHours }
+            val otH = weekShifts.sumOf { it.overtimeHours }
+            val totalE = weekShifts.sumOf { it.totalEarnings }
+
+            val label = "${startFmt.format(Date(wStart))} — ${endFmt.format(Date(wEnd))}"
+
+            val daysGrouped = weekShifts.groupBy { shift ->
+                Calendar.getInstance().apply {
+                    timeInMillis = shift.startTimeMillis
+                    set(Calendar.HOUR_OF_DAY, 0)
+                    set(Calendar.MINUTE, 0)
+                    set(Calendar.SECOND, 0)
+                    set(Calendar.MILLISECOND, 0)
+                }.timeInMillis
+            }
+
+            val dailySettlements = daysGrouped.entries.sortedBy { it.key }.map { (dayMillis, dShifts) ->
+                val dayTitle = dayTitleFmt.format(Date(dayMillis)).replaceFirstChar { it.uppercase() }
+                val shortDay = shortDayFmt.format(Date(dayMillis)).replaceFirstChar { it.uppercase() }
+                DaySettlement(
+                    dateMillis = dayMillis,
+                    dayTitle = dayTitle,
+                    shortDayLabel = shortDay,
+                    totalHours = dShifts.sumOf { it.durationHours },
+                    regularHours = dShifts.sumOf { it.regularHours },
+                    overtimeHours = dShifts.sumOf { it.overtimeHours },
+                    totalEarnings = dShifts.sumOf { it.totalEarnings },
+                    shifts = dShifts.sortedBy { it.startTimeMillis }
+                )
+            }
+
+            settlements.add(
+                WeeklySettlement(
+                    weekId = wStart.toString(),
+                    startMillis = wStart,
+                    endMillis = wEnd,
+                    weekRangeLabel = label,
+                    isCurrentWeek = isCurrentWeek,
+                    totalHours = totalH,
+                    regularHours = regH,
+                    overtimeHours = otH,
+                    totalEarnings = totalE,
+                    shiftsCount = weekShifts.size,
+                    daysCount = dailySettlements.size,
+                    daysWithActivity = dailySettlements,
+                    shifts = weekShifts
+                )
+            )
+        }
+
+        return settlements
     }
 }
